@@ -1,3 +1,13 @@
+/* Hind Siliguri-র বাংলা সংখ্যা (১, ৪ …) ভুল দেখায় — শুধু ০-৯ Noto Sans Bengali দিয়ে দেখাও */
+@font-face {
+  font-family: 'BnDigits';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/notosansbengali/v33/Cn-fJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mc4I3mYvNY.woff2) format('woff2');
+  unicode-range: U+09E6-09EF;
+}
+
 :root {
   --bg: #070b14;
   --bg2: #0c1322;
@@ -16,8 +26,8 @@
   --pink: #f472b6;
   --orange: #fb923c;
   --radius: 14px;
-  --font: 'Hind Siliguri', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font: 'BnDigits', 'Hind Siliguri', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'BnDigits', 'Hind Siliguri', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
