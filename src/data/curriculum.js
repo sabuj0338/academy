@@ -8,6 +8,7 @@ import simple from './simple.js';
 import enrich from './secEnrich.js';
 import { netPhases, netLessons } from './net/index.js';
 import { sdPhases, sdLessons } from './sd/index.js';
+import visuals from './visuals/index.js';
 
 // ───────── তিনটি learning track
 export const tracks = [
@@ -37,11 +38,17 @@ const secLessons = [...p1, ...p2, ...p3, ...p4, ...p5, ...p6].map((l) => {
 });
 
 // Recommended sequence: Networking → System Design → Security
+// visuals/*.js — ধাপে বাড়তি visual block (seq, anatomy, bars, layers, ask, maps)। নতুন ধাপ যোগ হয় না, তাই progress অক্ষত।
+const withVisuals = (l) => {
+  const v = visuals[l.id];
+  return v ? { ...l, steps: l.steps.map((st, i) => (v[i] ? { ...st, ...v[i] } : st)) } : l;
+};
+
 export const lessons = [
   ...netLessons.map((l) => ({ ...l, track: 'net' })),
   ...sdLessons.map((l) => ({ ...l, track: 'sd' })),
   ...secLessons,
-];
+].map(withVisuals);
 
 export const trackOf = (id) => tracks.find((t) => t.id === id) || tracks[0];
 export const phasesOf = (track) => phases.filter((p) => p.track === track);
