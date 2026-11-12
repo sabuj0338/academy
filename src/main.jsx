@@ -5,5 +5,6 @@ import './styles.css';
 import './labs.css';
 import './academy.css';
 import './engines.css';
+import './lesson.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);

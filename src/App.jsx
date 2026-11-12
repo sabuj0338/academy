@@ -45,7 +45,7 @@ export default function App() {
     if (msg) { setToast(msg); setTimeout(() => setToast(null), 2600); }
   }, []);
 
-  const lessonId = route.startsWith('lesson/') ? route.slice(7) : null;
+  const lessonId = route.startsWith('lesson/') ? route.slice(7).split('/')[0] : null;
   const lesson = lessonId ? lessonById(lessonId) : null;
   const routeTrack = route.startsWith('track/') ? route.slice(6) : lesson?.track;
 
@@ -102,8 +102,8 @@ export default function App() {
       </aside>
 
       <main className="main">
-        <AnimatePresence mode="wait">
-          <motion.div key={route || 'home'} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+        {/* CSS fade (exit animation নেই) — tab background-এ থাকলেও page বদল আটকে যায় না */}
+          <div className="fade-in" key={lessonId ? 'lesson/' + lessonId : route || 'home'}>
             {lesson ? (
               <LessonView lesson={lesson} progress={progress} update={update} go={go} next={lt[li + 1]} prev={lt[li - 1]} total={lt.length} />
             ) : route.startsWith('handbook') ? (
@@ -113,8 +113,7 @@ export default function App() {
             ) : (
               <Home progress={progress} go={go} />
             )}
-          </motion.div>
-        </AnimatePresence>
+          </div>
       </main>
 
       <AnimatePresence>

@@ -1,0 +1,210 @@
+// System Design track — ধাপের বাড়তি visual (গঠন net.js-এর শুরুতে লেখা)
+import { ask } from './net.js';
+
+export default {
+  'sd-fundamentals': {
+    2: { bars: { title: 'Availability-র “nine” — বছরে কতক্ষণ বন্ধ থাকা চলবে', scale: 'log', items: [['99% (two nines)', 5256, '৩.৬৫ দিন', 'bad'], ['99.9%', 526, '৮.৭৬ ঘণ্টা'], ['99.99%', 52.6, '৫২.৬ মিনিট'], ['99.999% (five nines)', 5.26, '৫.২৬ মিনিট', 'good']], note: 'প্রতিটি বাড়তি 9 পেতে খরচ ও জটিলতা প্রায় ১০ গুণ বাড়ে — তাই “কতটা দরকার” আগে ঠিক করো।' } },
+    3: { anatomy: { title: 'খামের পেছনে হিসাব — প্রতি সেকেন্ডে কত request?', parts: [
+      ['1,00,00,000 user', 'Daily active user', 'ধরে নেওয়া সংখ্যা — নিখুঁত হওয়ার দরকার নেই, order of magnitude ঠিক হলেই চলে।'],
+      [' × ', ''],
+      ['10 request', 'প্রতি user/দিন', 'একজন user দিনে গড়ে কয়টা request করে।'],
+      [' ÷ ', ''],
+      ['86,400 সেকেন্ড', 'এক দিন', '২৪ × ৬০ × ৬০। মুখস্থ রাখো: প্রায় ১ লাখ (10⁵) — তাহলে মুখে মুখে ভাগ করা যায়।'],
+      [' ≈ ', ''],
+      ['1,160 req/s', 'গড় QPS', 'এটা গড়। Peak সাধারণত গড়ের ২–৩ গুণ — design করো peak-এর জন্য (~৩,৫০০ req/s)।', 'good'],
+    ] } },
+    4: { ask: ask('তুমি একটি bank transfer system বানাচ্ছ। কোন trade-off টা বেছে নেবে?', ['একটু ধীর হোক, কিন্তু balance সবসময় নির্ভুল', 'খুব দ্রুত, মাঝে মাঝে ভুল balance দেখালেও চলবে', 'সবচেয়ে সস্তা — data হারালেও ক্ষতি নেই'], 0, 'টাকার হিসেবে consistency সবার আগে। আবার social media-র like count-এ উল্টো — সেখানে গতি বেশি জরুরি। “সঠিক” design নির্ভর করে requirement-এর উপর।') },
+  },
+  'sd-architecture': {
+    3: { seq: { title: 'Event-driven — Order service কাউকে সরাসরি ডাকে না', actors: [['🛒', 'Order'], ['📮', 'Event broker'], ['📧', 'Email'], ['📦', 'Inventory'], ['📊', 'Analytics']], msgs: [
+      [0, 1, 'OrderPlaced #981', 'Order service শুধু ঘোষণা করে “একটা order হয়েছে” — তারপর নিজের কাজে ফিরে যায়।'],
+      [1, 2, 'OrderPlaced', 'Email service শুনে confirmation পাঠায়।'],
+      [1, 3, 'OrderPlaced', 'Inventory service stock কমায়।'],
+      [1, 4, 'OrderPlaced', 'Analytics হিসাব রাখে। কাল নতুন “Loyalty points” service যোগ করলেও Order service-এ এক লাইন code বদলাতে হবে না।', 'good'],
+    ] } },
+    4: { ask: ask('৩ জনের team, নতুন startup, product এখনো বাজারে প্রমাণিত নয়। কোন architecture দিয়ে শুরু করবে?', ['Modular monolith', '২০টি microservice', 'প্রতিটি feature আলাদা serverless function + Kafka'], 0, 'Microservices সমাধান করে বড় team-এর সমন্বয়ের সমস্যা — যা তোমার এখনো নেই। আগে পরিষ্কার module সহ monolith; যেটা সত্যিই আলাদা scale চায়, পরে সেটা বের করে নিও।') },
+  },
+  'sd-api': {
+    0: { anatomy: { title: 'একটি REST request লাইন পড়া', parts: [
+      ['GET', 'Verb (method)', 'কী করতে চাই: GET পড়া, POST তৈরি, PUT/PATCH বদল, DELETE মোছা।'],
+      [' ', ''],
+      ['/v1', 'Version', 'API বদলালেও পুরনো mobile app যেন না ভাঙে।'],
+      ['/users/42', 'Resource', 'Noun, verb নয় — “৪২ নম্বর user”। `/getUser?id=42` নয়।'],
+      ['/orders', 'Sub-resource', 'ওই user-এর order-গুলো — সম্পর্কটা URL-এই বোঝা যায়।'],
+      ['?status=paid&limit=10', 'Filter ও pagination', 'সব data একবারে নয় — ছেঁকে, পাতা ভাগ করে।'],
+    ] } },
+    4: { seq: { title: 'Idempotency key — retry করলেও টাকা একবারই কাটে', actors: [['📱', 'App'], ['⚙️', 'Payment API'], ['🗄️', 'DB']], msgs: [
+      [0, 1, 'POST /pay  Idempotency-Key: abc', 'App একটি unique key বানিয়ে পাঠায়।'],
+      [1, 2, 'charge ৳500 + key abc সংরক্ষণ', 'টাকা কাটা হলো, আর key-টার সাথে ফলাফল লিখে রাখা হলো।'],
+      [1, 0, '200 OK ✖ (network-এ হারাল)', 'উত্তর ফেরার পথে internet চলে গেল। App জানে না টাকা কাটল কি না।', 'bad'],
+      [0, 1, 'POST /pay  Idempotency-Key: abc', 'App একই key দিয়ে আবার চেষ্টা করে।'],
+      [1, 2, 'key abc আগে দেখেছি?', 'API আগে key খোঁজে — পেয়ে গেল।'],
+      [1, 0, '200 OK (আগের ফলাফল)', 'নতুন করে charge হয়নি — শুধু পুরনো উত্তরটা আবার দেওয়া হলো।', 'good'],
+    ] } },
+  },
+  'sd-db-design': {
+    2: { ask: ask('orders table-এর প্রতিটি সারিতে customer-এর নাম ও ঠিকানা copy করে রাখা আছে। Customer ঠিকানা বদলালে কী সমস্যা?', ['হাজারো সারি update করতে হবে, একটা বাদ পড়লেই data অমিল', 'কোনো সমস্যা নেই, বরং দ্রুত', 'Database আর চালু হবে না'], 0, 'এটাই update anomaly। Normalization-এর মূল কথা: একটি তথ্য এক জায়গায় — orders-এ শুধু customer_id রাখো।') },
+    3: { bars: { title: '১০ লাখ সারি থেকে একজন user খুঁজতে কয়টা তুলনা লাগে', scale: 'log', items: [['Index ছাড়া (full scan)', 1000000, '১০,০০,০০০ পর্যন্ত', 'bad'], ['B-tree index দিয়ে', 20, '~২০', 'good']], note: 'log₂(১০ লাখ) ≈ ২০। Data ১০০ গুণ বাড়লেও index-এ লাগবে মাত্র ~২৭টি — এটাই logarithm-এর জাদু।' } },
+  },
+  'sd-db-internals': {
+    1: { layers: { title: 'ACID — চারটি অক্ষর, চারটি প্রতিশ্রুতি', items: [
+      ['⚛️', 'Atomicity — সব নয়তো কিছুই না', 'টাকা কাটল কিন্তু জমা হলো না — এমন অর্ধেক অবস্থা কখনো থাকবে না। মাঝপথে ভুল হলে পুরোটা ROLLBACK।'],
+      ['📏', 'Consistency — নিয়ম ভাঙবে না', 'Constraint (balance ≥ 0, foreign key) transaction-এর আগে ও পরে সবসময় সত্য।'],
+      ['🚧', 'Isolation — একে অপরের কাজে নাক গলায় না', 'একসাথে চলা দুটি transaction যেন মনে করে তারা একাই চলছে।'],
+      ['💾', 'Durability — COMMIT মানে পাকা', 'COMMIT-এর পরের সেকেন্ডে বিদ্যুৎ গেলেও data থাকবে — কারণ আগে WAL-এ (disk-এ) লেখা হয়েছে।'],
+    ] } },
+    2: { seq: { title: 'Race condition — শেষ একটি PS5, দুজন ক্রেতা', actors: [['🧑', 'রাফি'], ['🗄️', 'Database'], ['👩', 'মিতু']], msgs: [
+      [0, 1, 'SELECT stock → 1', 'রাফি দেখল ১টি আছে।'],
+      [2, 1, 'SELECT stock → 1', 'প্রায় একই মুহূর্তে মিতুও দেখল ১টি আছে।'],
+      [0, 1, 'UPDATE stock = 0', 'রাফি কিনে ফেলল।'],
+      [2, 1, 'UPDATE stock = 0', 'মিতুও কিনে ফেলল — কারণ তার পড়া তথ্য ততক্ষণে পুরনো।', 'bad'],
+      [1, 1, '২টি order, ১টি PS5 😱', 'দুজনই টাকা দিয়েছে, পণ্য একটি। সমাধান: `SELECT … FOR UPDATE` (lock) অথবা `UPDATE … WHERE stock > 0` (atomic)।', 'bad'],
+    ] } },
+    5: { seq: { title: 'Deadlock — দুজন দুজনের অপেক্ষায়', actors: [['🅰️', 'Transaction 1'], ['🗄️', 'সারি A / সারি B'], ['🅱️', 'Transaction 2']], msgs: [
+      [0, 1, 'LOCK সারি A ✓', 'T1 সারি A-তে তালা দিল।'],
+      [2, 1, 'LOCK সারি B ✓', 'T2 সারি B-তে তালা দিল।'],
+      [0, 1, 'LOCK সারি B … ⏳', 'T1-এর এবার B দরকার — কিন্তু সেটা T2-র হাতে। অপেক্ষা।', 'bad'],
+      [2, 1, 'LOCK সারি A … ⏳', 'T2-র দরকার A — সেটা T1-এর হাতে। দুজনই চিরকাল অপেক্ষায়।', 'bad'],
+      [1, 2, 'ERROR: deadlock detected', 'Database টের পেয়ে একজনকে বাতিল করে দেয়। প্রতিকার: সবসময় একই ক্রমে lock নাও (আগে A, তারপর B)।', 'good'],
+    ] } },
+  },
+  'sd-caching': {
+    0: { bars: { title: 'একই data কোথা থেকে আনতে কত সময় (আনুমানিক)', scale: 'sqrt', items: [['⚡ Redis (RAM)', 1, '~১ ms', 'good'], ['🗄️ PostgreSQL, index সহ', 10, '~১০ ms'], ['🐢 জটিল JOIN query', 200, '~২০০ ms'], ['🌍 বাইরের API', 500, '~৫০০ ms', 'bad']] } },
+    1: { seq: { title: 'Cache-aside — প্রথমবার miss, পরেরবার hit', actors: [['⚙️', 'App'], ['⚡', 'Redis'], ['🗄️', 'Database']], msgs: [
+      [0, 1, 'GET product:42', 'আগে cache-এ খোঁজো।'],
+      [1, 0, '(nil) — miss', 'নেই।', 'bad'],
+      [0, 2, 'SELECT … WHERE id = 42', 'তাহলে আসল database থেকে আনো (ধীর)।'],
+      [0, 1, 'SET product:42  EX 300', 'পরের জনের জন্য cache-এ রেখে দাও — ৫ মিনিটের TTL সহ।'],
+      [0, 1, 'GET product:42', 'পরের request…'],
+      [1, 0, 'hit ⚡ ~১ ms', '…database ছোঁয়াই লাগল না।', 'good'],
+    ] } },
+    4: { ask: ask('একটি জনপ্রিয় cache key-র মেয়াদ ঠিক শেষ হলো, আর সেই মুহূর্তেই ৫,০০০ request এল। কী ঘটবে?', ['৫,০০০ request-ই একসাথে database-এ ঝাঁপিয়ে পড়বে', 'সবাই পুরনো data পাবে', 'Redis নিজেই database থেকে এনে দেবে'], 0, 'এটাই cache stampede। প্রতিকার: lock দিয়ে শুধু একজনকে DB-তে যেতে দাও, TTL-এ একটু এলোমেলো সময় (jitter) যোগ করো, বা মেয়াদ শেষের আগেই refresh করো।') },
+  },
+  'sd-scaling': {
+    1: { ask: ask('Server-এর CPU ১০০%। সবচেয়ে বড় machine কিনে ফেলেছ, তবু কুলাচ্ছে না। এখন?', ['Horizontal scaling — আরও server যোগ করো', 'আরও বড় machine-এর জন্য অপেক্ষা করো', 'User কমিয়ে দাও'], 0, 'Vertical scaling-এর একটা ছাদ আছে (আর একটাই machine = SPOF)। Horizontal-এ ছাদ নেই — কিন্তু শর্ত হলো app-কে stateless হতে হবে।') },
+    2: { seq: { title: 'Stateless app — যে server-ই ধরুক, তোমাকে চেনে', actors: [['🧑', 'User'], ['⚖️', 'Load balancer'], ['🖥️', 'Server A'], ['🖥️', 'Server B'], ['⚡', 'Redis']], msgs: [
+      [0, 1, 'POST /login', 'প্রথম request।'],
+      [1, 2, '→ Server A', 'LB পাঠাল A-তে।'],
+      [2, 4, 'session:9f2 = user 7', 'A session নিজের memory-তে রাখে না — সবার ভাগের Redis-এ রাখে।', 'good'],
+      [0, 1, 'GET /cart  (cookie 9f2)', 'পরের request।'],
+      [1, 3, '→ Server B', 'এবার LB পাঠাল B-তে — সম্পূর্ণ অন্য machine।'],
+      [3, 4, 'session:9f2 ?', 'B-ও একই Redis থেকে পড়ে নেয়: “user 7”। User টেরই পেল না।', 'good'],
+    ] } },
+    3: { seq: { title: 'Replication lag — নিজের লেখা নিজেই দেখতে পাচ্ছ না', actors: [['⚙️', 'App'], ['🗄️', 'Primary'], ['📚', 'Replica']], msgs: [
+      [0, 1, 'UPDATE name = "রাফি"', 'লেখা সবসময় primary-তে যায়।'],
+      [1, 0, 'OK', 'Primary সাথে সাথে সফল বলে দিল।', 'good'],
+      [0, 2, 'SELECT name', 'পরের মুহূর্তে profile page replica থেকে পড়ল…'],
+      [2, 0, '"পুরনো নাম"', '…কিন্তু বদলটা তখনো replica-তে পৌঁছায়নি! User ভাবল save হয়নি।', 'bad'],
+      [1, 2, 'WAL stream (কয়েক ms পরে)', 'Async replication একটু পরে পৌঁছায়। প্রতিকার: নিজের সদ্য লেখা data কিছুক্ষণ primary থেকেই পড়ো (read-your-writes)।'],
+    ] } },
+  },
+  'sd-lb': {
+    1: { ask: ask('কিছু request ৫ ms-এ শেষ হয়, কিছু ৩০ সেকেন্ড ধরে চলে (video export)। কোন algorithm সবচেয়ে ন্যায্য?', ['Least connections — যার হাতে কম কাজ', 'Round robin — পালা করে', 'Random'], 0, 'Round robin ধরে নেয় সব request সমান। তা না হলে কোনো server-এ ভারী কাজ জমে যায়। Least connections সেই মুহূর্তে কে কতটা ব্যস্ত তা দেখে।') },
+    2: { seq: { title: 'Health check — অসুস্থ server traffic পায় না', actors: [['⚖️', 'Load balancer'], ['🖥️', 'Server 1'], ['🖥️', 'Server 2']], msgs: [
+      [0, 1, 'GET /health', 'LB কয়েক সেকেন্ড পরপর সবাইকে জিজ্ঞেস করে: “বেঁচে আছ?”'],
+      [1, 0, '200 OK', 'Server 1 সুস্থ।', 'good'],
+      [0, 2, 'GET /health', 'Server 2-কে একই প্রশ্ন।'],
+      [2, 0, '… timeout ✖', 'কোনো উত্তর নেই। টানা ৩ বার ব্যর্থ হলে LB একে তালিকা থেকে সরিয়ে দেয়।', 'bad'],
+      [0, 1, 'সব traffic → Server 1', 'User কিছুই টের পায় না। Server 2 আবার সুস্থ হলে LB নিজেই ফিরিয়ে আনবে।', 'good'],
+    ] } },
+  },
+  'sd-distributed': {
+    1: { ask: ask('দুই data center-এর মাঝের network কেটে গেছে (partition)। ATM system-এর কী করা উচিত?', ['টাকা তোলা বন্ধ রাখা — ভুল balance-এর চেয়ে “দুঃখিত” ভালো (CP)', 'দুই পাশেই টাকা তুলতে দেওয়া (AP)', 'Partition-কে উপেক্ষা করা'], 0, 'Partition ঘটবেই — তখন Consistency আর Availability-র মধ্যে একটা বাছতে হয়। টাকার ক্ষেত্রে C; আর shopping cart বা feed-এর ক্ষেত্রে সাধারণত A।') },
+    3: { seq: { title: 'Raft — leader মারা গেলে নতুন ভোট', actors: [['🖥️', 'Node A'], ['🖥️', 'Node B'], ['🖥️', 'Node C']], msgs: [
+      [0, 0, '💀 leader A বন্ধ', 'A ছিল leader। তার heartbeat আসা বন্ধ হয়ে গেল।', 'bad'],
+      [1, 1, 'timeout! term 2-এ আমি প্রার্থী', 'B-র এলোমেলো timer আগে শেষ হলো — সে নিজেকে প্রার্থী ঘোষণা করে নিজেকে ভোট দিল।'],
+      [1, 2, 'RequestVote (term 2)', 'B অন্যদের কাছে ভোট চায়।'],
+      [2, 1, 'ভোট দিলাম ✓', 'C এই term-এ এখনো কাউকে ভোট দেয়নি, আর B-র log তার চেয়ে পিছিয়ে নেই — তাই রাজি।', 'good'],
+      [1, 2, 'heartbeat — আমি leader', '৩ জনের মধ্যে ২ ভোট = majority। B এখন leader; সব লেখা তার মাধ্যমে যাবে।', 'good'],
+    ] } },
+  },
+  'sd-messaging': {
+    0: { bars: { title: 'Signup API-র response time — queue ছাড়া বনাম queue সহ (উদাহরণ)', items: [['সব কাজ request-এর ভেতরে (email + PDF + analytics)', 3200, '~৩,২০০ ms', 'bad'], ['শুধু DB-তে লেখা + queue-তে job', 80, '~৮০ ms', 'good']], note: 'ভারী কাজগুলো হারিয়ে যায়নি — worker পেছনে নিজের গতিতে করছে। User-কে শুধু অপেক্ষা করতে হচ্ছে না।' } },
+    2: { ask: ask('একটি “OrderPlaced” ঘটনা Email, Inventory ও Analytics — তিনটি service-কেই জানতে হবে। কোনটা লাগবে?', ['Pub/Sub — প্রত্যেক subscriber নিজের copy পায়', 'একটি সাধারণ queue — যে আগে নেয় সে-ই পায়', 'তিনটি service-কে পালা করে HTTP call'], 0, 'Queue-তে একটি message একজন worker-ই নেয় (কাজ ভাগাভাগি)। Pub/Sub-এ একই message সব subscriber পায় (ঘোষণা)।') },
+    4: { seq: { title: 'Outbox pattern — DB আর queue কখনো অমিল হয় না', actors: [['⚙️', 'App'], ['🗄️', 'Database'], ['🚚', 'Relay'], ['📮', 'Queue']], msgs: [
+      [0, 1, 'BEGIN: order + outbox সারি', 'একই transaction-এ দুটো লেখা: আসল order, আর “এই event পাঠাতে হবে” নোট।'],
+      [0, 1, 'COMMIT', 'দুটোই একসাথে সফল, নয়তো একসাথে বাতিল — মাঝামাঝি অবস্থা অসম্ভব।', 'good'],
+      [2, 1, 'না-পাঠানো outbox সারি?', 'আলাদা একটি relay process নিয়মিত খোঁজ নেয়।'],
+      [2, 3, 'publish OrderPlaced', 'Queue-তে পাঠায়।'],
+      [2, 1, 'sent = true', 'সফল হলে দাগ দিয়ে রাখে। মাঝপথে crash করলে আবার পাঠাবে — তাই consumer-কে idempotent হতে হবে।'],
+    ] } },
+  },
+  'sd-reliability': {
+    1: { ask: ask('Payment service-কে call করেছ, সে কোনো উত্তর দিচ্ছে না। Timeout না থাকলে তোমার server-এর কী হবে?', ['অপেক্ষমাণ request জমতে জমতে নিজেই ডুবে যাবে', 'কিছুই হবে না', 'নিজে থেকেই retry করে ঠিক হয়ে যাবে'], 0, 'প্রতিটি ঝুলে থাকা request একটি connection ও memory ধরে রাখে। একটা ধীর dependency এভাবে পুরো system টেনে নামায় — cascading failure।') },
+    2: { bars: { title: 'Exponential backoff — প্রতিবার দ্বিগুণ অপেক্ষা', items: [['১ম retry', 1, '১ সেকেন্ড পরে'], ['২য় retry', 2, '২ সেকেন্ড'], ['৩য় retry', 4, '৪ সেকেন্ড'], ['৪র্থ retry', 8, '৮ সেকেন্ড'], ['৫ম retry', 16, '১৬ সেকেন্ড, তারপর হাল ছাড়ো']], note: 'সাথে jitter (একটু এলোমেলো সময়) যোগ করো — নইলে হাজার client ঠিক একই মুহূর্তে retry করে অসুস্থ server-কে আবার ফেলে দেবে।' } },
+    3: { layers: { title: 'Circuit breaker-এর তিন অবস্থা', items: [
+      ['🟢', 'Closed — স্বাভাবিক', 'সব request যাচ্ছে। Breaker শুধু ব্যর্থতার হার গুনছে।'],
+      ['🔴', 'Open — সংযোগ বিচ্ছিন্ন', 'ব্যর্থতা সীমা ছাড়িয়েছে (যেমন ৫০%)। এখন call না করেই সাথে সাথে error/fallback — অসুস্থ service-কে দম নেওয়ার সময় দাও।'],
+      ['🟡', 'Half-open — পরীক্ষা', 'কিছুক্ষণ পর দু-একটা request পাঠিয়ে দেখো। সফল হলে Closed, ব্যর্থ হলে আবার Open।'],
+    ] } },
+  },
+  'sd-storage': {
+    0: { ask: ask('User-এর upload করা profile ছবি কোথায় রাখা সবচেয়ে ভালো?', ['Object storage (S3/R2) — DB-তে শুধু URL', 'PostgreSQL-এর ভেতরে BLOB হিসেবে', 'App server-এর local disk-এ'], 0, 'Object storage সস্তা, প্রায় অসীম, আর CDN-এর সাথে সহজে জোড়ে। Local disk-এ রাখলে দ্বিতীয় server যোগ করার দিনই ছবি “হারিয়ে” যাবে।') },
+    1: { seq: { title: 'Presigned URL — বড় file তোমার server ছোঁয়ই না', actors: [['🌐', 'Browser'], ['⚙️', 'তোমার API'], ['🪣', 'S3 / R2']], msgs: [
+      [0, 1, 'video.mp4 upload করতে চাই', 'শুধু অনুমতি চাওয়া — file নয়।'],
+      [1, 1, 'auth, size ও type যাচাই', 'API দেখে: user কে, কত বড়, কী ধরনের file।'],
+      [1, 0, 'presigned URL (৫ মিনিট মেয়াদ)', 'একটি সই করা, স্বল্পমেয়াদি URL — শুধু ওই একটি file ওই একটি জায়গায় রাখার অনুমতি।', 'good'],
+      [0, 2, 'PUT video.mp4 (2 GB)', 'Browser সরাসরি storage-এ পাঠায়। তোমার server-এর bandwidth বা memory খরচই হলো না।', 'good'],
+      [2, 1, 'event: upload শেষ', 'Storage জানিয়ে দেয়; এবার API metadata লেখে ও processing শুরু করে।'],
+    ] } },
+    3: { bars: { title: 'Adaptive streaming — একই video-র কয়েকটি মান (আনুমানিক bitrate)', items: [['240p', 0.4, '~০.৪ Mbps'], ['480p', 1, '~১ Mbps'], ['720p', 2.5, '~২.৫ Mbps'], ['1080p', 5, '~৫ Mbps']], note: 'Player প্রতি কয়েক সেকেন্ডে তোমার internet-এর গতি মেপে উপযুক্ত মানের পরের টুকরোটা আনে — তাই buffering-এর বদলে ছবি একটু ঝাপসা হয়।' } },
+  },
+  'sd-realtime': {
+    2: { seq: { title: '✓ আর ✓✓ আসলে কী', actors: [['🧑', 'রাফি'], ['🖥️', 'Chat server'], ['👩', 'মিতু']], msgs: [
+      [0, 1, '“কই তুমি?”', 'রাফি message পাঠাল।'],
+      [1, 0, '✓ sent', 'Server message-টা database-এ সংরক্ষণ করে প্রাপ্তিস্বীকার দিল।'],
+      [1, 2, '“কই তুমি?”', 'মিতু online থাকলে WebSocket দিয়ে সাথে সাথে পৌঁছায়।'],
+      [2, 1, 'ack: পেয়েছি', 'মিতুর phone জানায় “delivered”।'],
+      [1, 0, '✓✓ delivered', 'রাফি দুই টিক দেখে।', 'good'],
+      [2, 1, 'read', 'মিতু chat খুললে আরেকটি event — টিক নীল হয়।', 'good'],
+    ] } },
+    3: { ask: ask('মিতু offline (app বন্ধ)। রাফির message-এর কী হবে?', ['Server জমিয়ে রাখবে + push notification; online হলে পৌঁছে দেবে', 'Message হারিয়ে যাবে', 'রাফিকে আবার পাঠাতে হবে'], 0, 'WebSocket শুধু খোলা app-এ কাজ করে। তাই message আগে DB-তে সংরক্ষণ হয়, তারপর FCM/APNs দিয়ে push; আবার যুক্ত হলে client বলে “শেষ যেটা পেয়েছি তার পরের সব দাও”।') },
+  },
+  'sd-observability': {
+    1: { anatomy: { title: 'একটি structured log লাইন (JSON)', parts: [
+      ['{ ', ''],
+      ['"ts":"2026-11-12T10:15:03Z"', 'Timestamp', 'সবসময় UTC ও ISO format — নইলে একাধিক server-এর log মেলানো যায় না।'],
+      [', ', ''],
+      ['"level":"error"', 'Level', 'debug / info / warn / error — ছেঁকে দেখা ও alert বসানোর জন্য।'],
+      [', ', ''],
+      ['"trace_id":"a1b2c3"', 'Trace ID', 'একটি request যত service-ই পার হোক, সবার log-এ এই একই ID — এক search-এ পুরো গল্প।'],
+      [', ', ''],
+      ['"user_id":7', 'Context', 'কার ক্ষেত্রে ঘটল। সাবধান: password, token বা card নম্বর কখনো log-এ নয়।'],
+      [', ', ''],
+      ['"msg":"payment failed"', 'Message', 'মানুষের পড়ার জন্য ছোট, স্থির বাক্য।'],
+      [' }', ''],
+    ] } },
+    2: { ask: ask('RED method-এ একটি service-এর কোন তিনটি জিনিস মাপা হয়?', ['Rate, Errors, Duration', 'RAM, Ethernet, Disk', 'Requests, Events, Deploys'], 0, 'প্রতি সেকেন্ডে কত request (Rate), কতগুলো ব্যর্থ (Errors), আর কত সময় লাগছে (Duration)। USE (Utilization, Saturation, Errors) হলো machine/resource-এর জন্য।') },
+    3: { bars: { title: 'একটি ধীর request-এর trace — সময়টা কোথায় গেল?', items: [['API gateway (মোট)', 480, '৪৮০ ms'], ['auth service', 20, '২০ ms'], ['product service', 60, '৬০ ms'], ['DB query (index নেই!)', 350, '৩৫০ ms', 'bad'], ['Redis', 5, '৫ ms', 'good']], note: 'Tracing ছাড়া তুমি শুধু জানতে “API ধীর”। Tracing সহ এক নজরে দেখা যায় দোষী কে।' } },
+  },
+  'sd-deploy': {
+    0: { layers: { title: 'একটি Docker image — স্তরের উপর স্তর', items: [
+      ['📦', 'তোমার app code', 'সবচেয়ে উপরের ও সবচেয়ে ঘনঘন বদলানো স্তর — তাই Dockerfile-এ এটা সবার শেষে COPY করো।'],
+      ['📚', 'Dependency (go mod download / npm ci)', 'go.mod বা package.json না বদলালে এই স্তর cache থেকে আসে — build কয়েক সেকেন্ডে শেষ।'],
+      ['⚙️', 'Runtime (Go / Node)', 'ভাষার compiler বা runtime।'],
+      ['🐧', 'Base OS (alpine / distroless)', 'ছোট base = ছোট image + কম vulnerability।'],
+    ] } },
+    1: { ask: ask('CI pipeline-এ test fail করেছে। সঠিক আচরণ কোনটা?', ['Pipeline থেমে যাবে — production-এ কিছুই যাবে না', 'Deploy হবে, test পরে ঠিক করা যাবে', 'Test-টা মুছে দিয়ে আবার চালাও'], 0, 'CI-এর পুরো উদ্দেশ্যই এই দরজা: ভাঙা code যেন main বা production-এ না পৌঁছায়।') },
+    2: { seq: { title: 'Kubernetes reconcile loop — “যা চাই” বনাম “যা আছে”', actors: [['🧑‍💻', 'তুমি'], ['🧠', 'Control plane'], ['🖥️', 'Node']], msgs: [
+      [0, 1, 'replicas: 3', 'তুমি শুধু কাঙ্ক্ষিত অবস্থা (desired state) বলে দাও — কীভাবে করতে হবে তা নয়।'],
+      [1, 2, '3টি pod চালু করো', 'Scheduler ঠিক করে কোন node-এ বসবে।'],
+      [2, 2, '💥 একটি pod crash', 'রাত ৩টায় একটি pod মরে গেল। এখন চলছে ২টি।', 'bad'],
+      [1, 1, 'চাই 3, আছে 2', 'Controller সারাক্ষণ তুলনা করছে — অমিল ধরা পড়ল।'],
+      [1, 2, 'নতুন pod চালু করো', 'কাউকে ঘুম থেকে ডাকতে হলো না — system নিজেই সেরে উঠল (self-healing)।', 'good'],
+    ] } },
+  },
+  'sd-advanced': {
+    1: { ask: ask('২টি app server, ১টি load balancer, ১টি PostgreSQL। এখানে Single Point of Failure কোনগুলো?', ['Load balancer ও database', 'শুধু app server', 'কোনোটাই নয়'], 0, 'যার একটাই copy আছে, সেটাই SPOF। App server দুটি বলে একটা গেলেও চলে; কিন্তু LB বা DB গেলে সব বন্ধ — এদেরও standby লাগবে।') },
+    2: { anatomy: { title: 'দুর্ঘটনার timeline — RPO আর RTO', parts: [
+      ['🕛 শেষ backup', 'রাত ১২টা', 'সর্বশেষ সফল backup বা replica-তে পৌঁছানো শেষ বিন্দু।'],
+      [' ←── ', ''],
+      ['RPO', 'কতটা data হারানো সহনীয়', 'Recovery Point Objective: backup থেকে দুর্ঘটনা পর্যন্ত সময়। দিনে একবার backup হলে RPO ২৪ ঘণ্টা পর্যন্ত — এতটা হারানো চলবে?', 'bad'],
+      [' ──→ ', ''],
+      ['💥 দুর্ঘটনা', 'সকাল ৯টা', 'Disk নষ্ট, ransomware, বা ভুল করে DROP TABLE।', 'bad'],
+      [' ←── ', ''],
+      ['RTO', 'কত দ্রুত ফিরতে হবে', 'Recovery Time Objective: দুর্ঘটনা থেকে আবার চালু হওয়া পর্যন্ত সময়। এটা জানার একমাত্র উপায় — আগে থেকে restore মহড়া দেওয়া।'],
+      [' ──→ ', ''],
+      ['✅ আবার চালু', 'সকাল ১১টা', 'RTO পূরণ হলো ২ ঘণ্টায়।', 'good'],
+    ] } },
+  },
+};
