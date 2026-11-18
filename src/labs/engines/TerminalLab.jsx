@@ -34,7 +34,7 @@ export default function TerminalLab({ preset, onComplete }) {
     }
     setLines((l) => [...l, { k: 'cmd', t: c }, { k: 'out', t: out }]);
     const nd = P.missions.filter((ms) => (ms.check ? ms.check(c, state.current) : state.current.flags[ms.id])).map((ms) => ms.id);
-    setDone(nd);
+    setDone((d) => [...new Set([...d, ...nd])]); // একবার হলে mission শেষই থাকে
   };
 
   return (

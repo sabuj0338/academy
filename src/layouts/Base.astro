@@ -14,8 +14,8 @@ interface Props {
 const { title, description, active, courseId, footer = true } = Astro.props;
 const site = 'Engineering Academy — বাংলায় দেখে-ছুঁয়ে শেখো';
 const fullTitle = title ? `${title} · Engineering Academy` : site;
-const desc = description || 'Networking, System Design ও Cyber Security — একদম শুরু থেকে, সহজ বাংলায়, 3D animation আর interactive lab দিয়ে।';
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const desc = description || 'Networking, System Design, Cyber Security ও Cloud DevOps — একদম শুরু থেকে, সহজ বাংলায়, 3D animation আর interactive lab দিয়ে।';
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
 ---
 <!doctype html>
 <html lang="bn">

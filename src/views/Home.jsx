@@ -16,7 +16,8 @@ const METHOD = [
 const PATH = [
   ['net', 'আগে বোঝো data কীভাবে এক computer থেকে আরেকটায় যায়।'],
   ['sd', 'তারপর দেখো সেই যোগাযোগ দিয়ে বড় app কীভাবে বানানো হয়।'],
-  ['sec', 'শেষে শেখো সেই app-কে আক্রমণ থেকে কীভাবে বাঁচাতে হয়।'],
+  ['sec', 'তারপর শেখো সেই app-কে আক্রমণ থেকে কীভাবে বাঁচাতে হয়।'],
+  ['cd', 'আর শেষে নিজের হাতে চালাও — Linux, Docker, CI/CD আর cloud।'],
 ];
 
 function MethodArt({ kind }) {
@@ -56,7 +57,7 @@ export default function Home() {
         <div className="animate-rise">
           <span className="inline-block rounded-full border border-brand/25 bg-brand/10 px-3.5 py-1.5 text-[13.5px] font-semibold">🎓 বিনামূল্যে · সহজ বাংলায় · কোনো অভিজ্ঞতা লাগবে না</span>
           <h1 className="mb-3.5 mt-4 text-[38px] font-bold leading-[1.18] tracking-tight md:text-[52px]">প্রযুক্তির কঠিন বিষয়,<br /><span className="text-grad">চোখে দেখে শেখো</span></h1>
-          <p className="mb-6 max-w-[560px] text-[17px] text-muted md:text-[18.5px]">Internet কীভাবে চলে, বড় app কীভাবে বানানো হয়, আর hacker-দের কীভাবে ঠেকাতে হয় — 3D animation, interactive lab আর গল্পের মতো ব্যাখ্যায়। একদম শুরু থেকে, নিজের গতিতে।</p>
+          <p className="mb-6 max-w-[560px] text-[17px] text-muted md:text-[18.5px]">Internet কীভাবে চলে, বড় app কীভাবে বানানো হয়, নিজের app cloud-এ কীভাবে চালাতে হয়, আর hacker-দের কীভাবে ঠেকাতে হয় — 3D animation, interactive lab আর গল্পের মতো ব্যাখ্যায়। একদম শুরু থেকে, নিজের গতিতে।</p>
           <div className="flex flex-wrap gap-2.5">
             {last
               ? <a className="btn primary lg" href={href.lesson(last.id)}>▶ চালিয়ে যাও: {last.title.slice(0, 26)}{last.title.length > 26 ? '…' : ''}</a>

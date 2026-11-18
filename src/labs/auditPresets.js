@@ -1,7 +1,8 @@
+import cdAudit from './presets/cdAudit.js';
 // AuditLab presets — প্রতিটি লাইন string অথবা { t, bad: { why, fix } }
 const B = (t, why, fix) => ({ t, bad: { why, fix } });
 
-export const auditPresets = {
+const basePresets = {
   sshd: {
     file: '/etc/ssh/sshd_config',
     lines: [
@@ -114,3 +115,6 @@ export const auditPresets = {
     ],
   },
 };
+
+// কোর্স-ভিত্তিক preset (Cloud ও DevOps)
+export const auditPresets = { ...basePresets, ...cdAudit };
