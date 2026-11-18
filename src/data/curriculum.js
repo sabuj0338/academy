@@ -8,6 +8,7 @@ import simple from './simple.js';
 import enrich from './secEnrich.js';
 import { netPhases, netLessons } from './net/index.js';
 import { sdPhases, sdLessons } from './sd/index.js';
+import { cdPhases, cdLessons } from './cd/index.js';
 import visuals from './visuals/index.js';
 import courseList, { LEVELS, upcoming } from './courses.js';
 
@@ -29,6 +30,7 @@ export const phases = [
   ...netPhases.map((p) => ({ ...p, track: 'net' })),
   ...sdPhases.map((p) => ({ ...p, track: 'sd' })),
   ...secPhases.map((p) => ({ ...p, track: 'sec' })),
+  ...cdPhases.map((p) => ({ ...p, track: 'cd' })),
 ];
 
 const secLessons = [...p1, ...p2, ...p3, ...p4, ...p5, ...p6].map((l) => {
@@ -47,6 +49,7 @@ export const lessons = [
   ...netLessons.map((l) => ({ ...l, track: 'net' })),
   ...sdLessons.map((l) => ({ ...l, track: 'sd' })),
   ...secLessons,
+  ...cdLessons.map((l) => ({ ...l, track: 'cd' })),
 ].map(withVisuals).map((l) => {
   const c = courseList.find((x) => x.id === l.track);
   return { ...l, level: l.level || c?.lessonLevels?.[l.id] || c?.level || 'beginner' };

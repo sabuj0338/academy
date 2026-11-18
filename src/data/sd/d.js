@@ -264,7 +264,7 @@ export default [
         edges: [['dev', 'git'], ['git', 'ci'], ['ci', 'scan'], ['scan', 'reg'], ['ci', 'reg'], ['reg', 'stg'], ['stg', 'canary'], ['canary', 'prod'], ['stg', 'prod']],
         modes: [
           { id: 'happy', name: '✅ Happy path', hops: [
-            { path: ['dev', 'git', 'ci'], label: 'git push → PR', desc: 'Push হতেই CI শুরু: go vet, unit test, integration test।' },
+            { path: ['dev', 'git', 'ci'], label: 'git push → PR', desc: 'Push হতেই CI শুরু: lint (ESLint), unit test, integration test।' },
             { path: ['ci', 'scan'], label: 'tests ✓ → scan', desc: 'Dependency ও container image vulnerability scan (npm audit, Trivy)।' },
             { path: ['scan', 'reg'], label: 'build + push v2', desc: 'Image build হয়ে registry-তে — commit SHA দিয়ে tag।' },
             { path: ['reg', 'stg'], label: 'deploy staging', desc: 'Staging-এ deploy, smoke test, QA।' },

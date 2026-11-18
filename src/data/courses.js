@@ -96,10 +96,38 @@ export default [
       postgres: 'advanced', redis: 'advanced', scanning: 'advanced', logs: 'advanced', incident: 'advanced', capstone: 'advanced', pinning: 'advanced', oauth: 'advanced',
     },
   },
+  {
+    id: 'cd',
+    icon: '☁️',
+    title: 'Cloud & DevOps',
+    bn: 'ক্লাউড ও ডেভঅপস',
+    q: 'App নিজে কীভাবে চালাব?',
+    color: '#10b981',
+    grad: 'linear-gradient(135deg,#10b981,#0ea5e9)',
+    level: 'beginner',
+    levelRange: 'শুরু → মাঝারি',
+    tagline: 'Linux, Git, Docker, CI/CD, Terraform আর Kubernetes — নিজের app cloud-এ তুলে নিজেই চালাতে শেখো।',
+    desc: 'Code লেখা থেকে cloud-এ চালানো, পাহারা দেওয়া আর খরচ সামলানো পর্যন্ত — হাতে-কলমে।',
+    audience: 'যারা নিজের app deploy করতে চায়, আর DevOps বা cloud-এ career শুরু করতে চায়',
+    prerequisites: ['Computer চালাতে পারা — programming-এর গভীর জ্ঞান লাগবে না', 'Networking কোর্সের প্রথম কয়েকটা lesson (IP, DNS, port) জানা থাকলে আরও সহজ'],
+    outcomes: [
+      'Linux server-এ command line দিয়ে স্বচ্ছন্দে কাজ করতে পারবে',
+      'Git, Docker আর Docker Compose দিয়ে যেকোনো app প্যাক করে চালাতে পারবে',
+      'GitHub Actions দিয়ে automatic test ও deploy বানাতে পারবে',
+      'Terraform, VPC, Kubernetes, monitoring আর খরচ — production-এর পুরো ছবি বুঝবে',
+    ],
+    units: [
+      { title: 'ভিত্তি', desc: 'Cloud কী, server-এর ভাষা (Linux) আর code-এর ইতিহাস (Git)', phases: [1, 2, 3] },
+      { title: 'Container', desc: 'App-কে box-এ ভরা, আর অনেক box একসাথে চালানো', phases: [4, 5] },
+      { title: 'Automation', desc: 'Test, deploy আর infrastructure — সব code-এ', phases: [6, 7] },
+      { title: 'Production চালানো', desc: 'Network, Kubernetes, monitoring, নিরাপত্তা, খরচ — আর capstone', phases: [8, 9, 10, 11, 12] },
+    ],
+    lessonLevels: { 'cd-cicd': 'intermediate', 'cd-iac': 'intermediate', 'cd-cloudnet': 'intermediate', 'cd-k8s': 'intermediate', 'cd-observe': 'intermediate', 'cd-secops': 'intermediate', 'cd-capstone': 'advanced' },
+  },
 ];
 
 // ভবিষ্যতের কোর্স — catalog-এ “শীঘ্রই আসছে” কার্ড হিসেবে দেখায়
 export const upcoming = [
-  { icon: '☁️', title: 'Cloud ও DevOps', desc: 'Linux, Docker, CI/CD আর cloud-এ app চালানো' },
   { icon: '🗄️', title: 'Database গভীরে', desc: 'SQL শেখা থেকে query optimization পর্যন্ত' },
+  { icon: '💻', title: 'Web Development', desc: 'HTML, CSS, JavaScript থেকে নিজের website' },
 ];

@@ -9,6 +9,7 @@
 | 🌐 নেটওয়ার্কিং — Internet আসলে কীভাবে চলে? | একদম শুরু থেকে | ১২ | ৩২ |
 | 🏗️ সিস্টেম ডিজাইন — বড় app কীভাবে বানানো হয়? | শুরু → মাঝারি | ১৬ | ৩৭ |
 | 🛡️ সিকিউরিটি — App-কে কীভাবে সুরক্ষিত রাখব? | শুরু → উন্নত | ৪০ | ৪৭ |
+| ☁️ ক্লাউড ও ডেভঅপস — App নিজে কীভাবে চালাব? | শুরু → মাঝারি | ১২ | ২৭ |
 
 প্রতিটি lesson-এ: “সহজ কথায়” ব্যাখ্যা, নতুন শব্দের tooltip, উপমা, ধাপে ধাপে চলা diagram, পড়ার মাঝে “থামো, ভাবো” প্রশ্ন, interactive lab, quiz, mind map + flashcard দিয়ে ঝালাই, আর cheatsheet। Code উদাহরণ JavaScript (Node.js / Express / React Native)-এ।
 
@@ -44,9 +45,9 @@ npm run preview    # build করা site দেখো
 | `src/components/blocks.jsx` | পাঠের ভেতরের visual block-এর renderer |
 | `src/data/courses.js` | **কোর্সের তালিকা** — title, level, যা শিখবে, শুরুর আগে, unit |
 | `src/data/curriculum.js` | কোর্স, phase ও lesson জোড়া লাগানো + helper |
-| `src/data/net/`, `src/data/sd/`, `src/data/phase1-6.js` | তিন কোর্সের lesson |
+| `src/data/net/`, `src/data/sd/`, `src/data/phase1-6.js`, `src/data/cd/` | চার কোর্সের lesson |
 | `src/data/visuals/` | ধাপে বাড়তি visual block — lesson data না ছুঁয়ে উপর থেকে জোড়া হয় |
-| `src/labs/` | Lab engine (`viz/`, `engines/`) ও security lab (`custom/`) |
+| `src/labs/` | Lab engine (`viz/`, `engines/`), security lab (`custom/`), আর কোর্স-ভিত্তিক terminal/audit preset (`presets/`) |
 | `src/lib/progress.js`, `src/lib/nav.js` | অগ্রগতির store, আর সব URL এক জায়গায় |
 
 ### নতুন কোর্স যোগ করা

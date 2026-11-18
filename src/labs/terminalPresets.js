@@ -1,8 +1,9 @@
+import cdTerminal from './presets/cdTerminal.js';
 // TerminalLab-এর জন্য সিমুলেটেড পরিবেশ। কোনো আসল command চলে না।
 // commands: [{ match: RegExp, out: string | (m, state) => string }]
 // missions: [{ id, text, check: (cmd, state) => bool }]
 
-export const terminalPresets = {
+const basePresets = {
   recon: {
     prompt: 'you@kali:~$',
     banner: 'Recon lab — target: shop.local (তোমার নিজের lab app)\nটিপ: curl -I, curl <url>, cat, grep ব্যবহার করো। "help" লিখে সব command দেখো।',
@@ -248,3 +249,6 @@ export const terminalPresets = {
     ],
   },
 };
+
+// কোর্স-ভিত্তিক preset (Cloud ও DevOps)
+export const terminalPresets = { ...basePresets, ...cdTerminal };
