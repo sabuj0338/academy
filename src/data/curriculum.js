@@ -9,19 +9,18 @@ import enrich from './secEnrich.js';
 import { netPhases, netLessons } from './net/index.js';
 import { sdPhases, sdLessons } from './sd/index.js';
 import visuals from './visuals/index.js';
+import courseList, { LEVELS, upcoming } from './courses.js';
 
-// ───────── তিনটি learning track
-export const tracks = [
-  { id: 'net', icon: '🌐', title: 'Computer Networking', bn: 'নেটওয়ার্কিং', q: 'কীভাবে যোগাযোগ হয়?', color: '#22d3ee', grad: 'linear-gradient(135deg,#0891b2,#2563eb)', desc: 'Browser থেকে router, DNS, internet হয়ে server পর্যন্ত data কীভাবে ভ্রমণ করে।' },
-  { id: 'sd', icon: '🏗️', title: 'System Design', bn: 'সিস্টেম ডিজাইন', q: 'কীভাবে তৈরি হয়?', color: '#a78bfa', grad: 'linear-gradient(135deg,#7c3aed,#db2777)', desc: 'ছোট app থেকে লাখো user সামলাতে পারে এমন scalable, reliable architecture।' },
-  { id: 'sec', icon: '🛡️', title: 'Application & Infrastructure Security', bn: 'সিকিউরিটি', q: 'কীভাবে সুরক্ষিত রাখব?', color: '#f472b6', grad: 'linear-gradient(135deg,#db2777,#ea580c)', desc: 'Attacker-এর মতো ভাবো, defender-এর মতো বানাও — web, API, server, database।' },
-];
+// ───────── কোর্স (পুরনো নাম "track" — lesson.track = course id)
+export const tracks = courseList;
+export const courses = courseList;
+export { LEVELS, upcoming };
 
 const secPhases = [
   { id: 1, title: 'Security Fundamentals', bn: 'ভিত্তি', color: '#22d3ee', desc: 'HTTP, session, AuthN/AuthZ, recon, threat modeling' },
   { id: 2, title: 'Common Web Attacks', bn: 'সাধারণ ওয়েব আক্রমণ', color: '#f472b6', desc: 'XSS, CSRF, SQLi, IDOR, SSRF, upload, traversal…' },
   { id: 3, title: 'API & Mobile Security', bn: 'API ও মোবাইল', color: '#a78bfa', desc: 'Mass assignment, JWT, OAuth, rate limit, CORS, mobile' },
-  { id: 4, title: 'Server & Deployment', bn: 'সার্ভার ও ডিপ্লয়মেন্ট', color: '#fb923c', desc: 'Linux, SSH, firewall, Nginx, Docker, Cloudflare, TLS' },
+  { id: 4, title: 'Server & Deployment', bn: 'সার্ভার ও ডিপ্লয়মেন্ট', color: '#fb923c', desc: 'Linux, SSH, firewall, Nginx, Docker, CDN, TLS' },
   { id: 5, title: 'Database & Data', bn: 'ডেটাবেস ও ডেটা', color: '#fbbf24', desc: 'PostgreSQL, Redis, secrets, encryption, backup' },
   { id: 6, title: 'Testing & Monitoring', bn: 'টেস্টিং ও মনিটরিং', color: '#4ade80', desc: 'Headers, deps, Burp/ZAP, logs, incident response, audit' },
 ];
@@ -48,13 +47,40 @@ export const lessons = [
   ...netLessons.map((l) => ({ ...l, track: 'net' })),
   ...sdLessons.map((l) => ({ ...l, track: 'sd' })),
   ...secLessons,
-].map(withVisuals);
+].map(withVisuals).map((l) => {
+  const c = courseList.find((x) => x.id === l.track);
+  return { ...l, level: l.level || c?.lessonLevels?.[l.id] || c?.level || 'beginner' };
+});
 
 export const trackOf = (id) => tracks.find((t) => t.id === id) || tracks[0];
 export const phasesOf = (track) => phases.filter((p) => p.track === track);
 export const lessonsOf = (track) => lessons.filter((l) => l.track === track);
 export const phaseOf = (l) => phases.find((p) => p.track === l.track && p.id === l.phase);
 export const lessonById = (id) => { const k = id.includes(':') ? id.split(':')[1] : id; return lessons.find((l) => l.id === k); };
+export const levelOf = (l) => LEVELS[l.level] || LEVELS.beginner;
+
+// "৪০–৫০ মিনিট" → ৫০ (উপরের সীমা, মিনিটে)
+const fromBn = (s) => s.replace(/[০-৯]/g, (d) => '০১২৩৪৫৬৭৮৯'.indexOf(d));
+export const minutesOf = (l) => {
+  const n = fromBn(l.duration || '').match(/\d+(\.\d+)?/g)?.map(Number) || [30];
+  const m = Math.max(...n);
+  return /ঘণ্টা/.test(l.duration || '') ? m * 60 : m;
+};
+
+// Syllabus-এর unit: course.units থাকলে সেটা, নইলে প্রতিটি phase একটি unit
+export const unitsOf = (courseId) => {
+  const c = trackOf(courseId);
+  const ph = phasesOf(courseId);
+  const ls = lessonsOf(courseId);
+  const groups = c.units || ph.map((p) => ({ title: p.bn, desc: p.desc, phases: [p.id] }));
+  return groups.map((u) => ({ ...u, lessons: ls.filter((l) => u.phases.includes(l.phase)) }));
+};
+export const unitOf = (l) => unitsOf(l.track).find((u) => u.phases.includes(l.phase));
+export const courseStats = (courseId) => {
+  const ls = lessonsOf(courseId);
+  const mins = ls.reduce((s, l) => s + minutesOf(l), 0);
+  return { lessons: ls.length, labs: ls.reduce((s, l) => s + l.labs.length, 0), hours: Math.round(mins / 60) };
+};
 
 // একই feature — তিন দৃষ্টিকোণ (home page-এর knowledge map)
 export const scenarios = [
