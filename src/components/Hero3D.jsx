@@ -69,10 +69,10 @@ function Shield() {
 
 export default function Hero3D() {
   return (
-    <Canvas camera={{ position: [0, 0, 7.2], fov: 45 }} dpr={[1, 2]}>
+    <Canvas camera={{ position: [0, 0, 8.6], fov: 45 }} dpr={[1, 2]}>
       <ambientLight intensity={0.6} />
       <pointLight position={[4, 4, 6]} intensity={50} color="#e0f2fe" />
-      <group position={[2.2, 0.3, 0]}>
+      <group position={[0, 0, 0]}>
         <Globe />
         <Orbit r={2.9} speed={0.6} color="#22d3ee" tilt={0.5} />
         <Orbit r={3.3} speed={-0.4} color="#f472b6" tilt={-0.7} n={2} />

@@ -29,7 +29,7 @@ const FILES = [
     B("  print('Logged in, token=$access');", 'Token logcat-এ — অন্য app বা crash report-এ যেতে পারে।', "  // কখনো token log কোরো না"),
     "}",
   ] },
-  { name: 'shared_prefs/FlutterSharedPreferences.xml', icon: '🗂️', lines: [
+  { name: 'shared_prefs/com.shopbd.app_preferences.xml', icon: '🗂️', lines: [
     "<?xml version='1.0' encoding='utf-8'?>",
     '<map>',
     '  <string name="flutter.theme">dark</string>',

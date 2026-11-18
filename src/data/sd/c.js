@@ -198,8 +198,8 @@ export default [
       },
       {
         title: 'Timeout — অনন্তকাল অপেক্ষা নয়',
-        body: 'প্রতিটি network call-এ timeout দাও। Go-র default http.Client-এ timeout নেই! Timeout ছাড়া একটি ধীর dependency তোমার সব resource খেয়ে ফেলবে।',
-        code: [{ label: 'Go: timeout সহ', lang: 'go', text: 'client := &http.Client{Timeout: 2 * time.Second}\nctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)\ndefer cancel()\nreq, _ := http.NewRequestWithContext(ctx, "POST", payURL, body)' }],
+        body: 'প্রতিটি network call-এ timeout দাও। অনেক HTTP library-তে default-এ কোনো timeout নেই — যেমন JavaScript-এর fetch! Timeout ছাড়া একটি ধীর dependency তোমার সব resource খেয়ে ফেলবে।',
+        code: [{ label: 'JavaScript: timeout সহ', lang: 'js', text: '// ১.৫ সেকেন্ডে উত্তর না এলে request বাতিল\nconst res = await fetch(payURL, {\n  method: \'POST\',\n  body,\n  signal: AbortSignal.timeout(1500),\n});' }],
         tip: 'Timeout ঠিক করো dependency-র p99 latency দেখে — একটু বেশি। আর মোট request-এর একটি deadline রাখো যা ভেতরের সব call-এ ছড়ায় (context propagation)।',
       },
       {
@@ -235,7 +235,7 @@ export default [
       severity: 'design',
       summary: 'প্রতিটি call-এ timeout; idempotent হলে backoff + jitter সহ সীমিত retry; ব্যর্থতা বেশি হলে circuit breaker; dependency প্রতি bulkhead; প্রবেশপথে rate limit।',
       rules: ['Timeout ছাড়া কোনো network call নয়', 'Retry এক layer-এ, max 2-3, backoff+jitter', 'Breaker: CLOSED → OPEN → HALF-OPEN', 'Fallback/graceful degradation পরিকল্পনা', 'Overload-এ 429/503 দিয়ে load shed'],
-      checklist: ['Go http.Client-এ Timeout সেট?', 'Retry budget আছে?', 'Breaker state metric/alert?', 'Chaos test (dependency মেরে দেখা)?'],
+      checklist: ['প্রতিটি fetch/HTTP call-এ timeout সেট?', 'Retry budget আছে?', 'Breaker state metric/alert?', 'Chaos test (dependency মেরে দেখা)?'],
       commands: ['curl --max-time 2 https://dep/health'],
       remember: 'ধীর হওয়া মারা যাওয়ার চেয়েও খারাপ — timeout দাও।',
     },

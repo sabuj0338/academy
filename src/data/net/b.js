@@ -230,7 +230,7 @@ export default [
         intro: 'প্রতিটি কাজের জন্য কোন DNS record বানাবে?',
         buckets: [{ id: 'a', label: 'A / AAAA', color: '#22d3ee' }, { id: 'cname', label: 'CNAME', color: '#a78bfa' }, { id: 'mx', label: 'MX', color: '#fbbf24' }, { id: 'txt', label: 'TXT', color: '#4ade80' }],
         items: [
-          { text: 'api.shop.com → তোমার VPS 203.0.113.10', bucket: 'a', explain: 'নাম → IP = A।' },
+          { text: 'api.shop.com → server 203.0.113.10', bucket: 'a', explain: 'নাম → IP = A।' },
           { text: 'IPv6 ঠিকানা দেওয়া', bucket: 'a', explain: 'AAAA।' },
           { text: 'www → shop.com', bucket: 'cname', explain: 'এক নামকে আরেক নামে — CNAME।' },
           { text: 'store.shop.com → shops.myshopify.com', bucket: 'cname', explain: 'বাইরের service-এর নামে — CNAME।' },
@@ -274,7 +274,7 @@ export default [
     steps: [
       {
         title: 'একটি server, অনেক app',
-        body: 'তোমার VPS-এ একসাথে Nginx, SSH, Postgres, Redis চলে — সবার IP একই। Packet এলে OS কীভাবে বোঝে কাকে দেবে? TCP/UDP header-এর destination port দেখে।',
+        body: 'একটি server-এ একসাথে Nginx (web server), SSH, PostgreSQL (database) ও Redis (cache) চলে — সবার IP একই। Packet এলে OS কীভাবে বোঝে কাকে দেবে? TCP/UDP header-এর destination port দেখে।',
         analogy: 'হাসপাতালের ঠিকানা একটা, কিন্তু রুম নম্বর দেখে রোগী ঠিক ডাক্তারের কাছে যায়: রুম 443 = website ডাক্তার, রুম 22 = admin অফিস, রুম 5432 = রেকর্ড রুম (বাইরের কারো ঢোকা নিষেধ!)।',
         chain: [['📦', 'Packet', 'dst 203.0.113.10:443'], ['🖥️', 'OS', 'port দেখে'], ['🔀', 'Nginx', ':443 শুনছে']],
       },
@@ -291,7 +291,7 @@ export default [
       },
       {
         title: 'Listening ও bind — 0.0.0.0 বনাম 127.0.0.1',
-        body: 'Server app একটা port-এ “listen” করে। কিন্তু কোন interface-এ? 0.0.0.0 মানে সব জায়গা থেকে (internet সহ), 127.0.0.1 মানে শুধু একই machine থেকে। সঠিক নকশা: Nginx 0.0.0.0:443-এ, আর Go Fiber/Postgres/Redis 127.0.0.1-এ — যাতে বাইরের কেউ সরাসরি না পৌঁছায়।',
+        body: 'Server app একটা port-এ “listen” করে। কিন্তু কোন interface-এ? 0.0.0.0 মানে সব জায়গা থেকে (internet সহ), 127.0.0.1 মানে শুধু একই machine থেকে। সঠিক নকশা: Nginx 0.0.0.0:443-এ, আর তোমার app (Node.js), PostgreSQL ও Redis 127.0.0.1-এ — যাতে বাইরের কেউ সরাসরি না পৌঁছায়।',
         compare: [{ title: '✖ বিপজ্জনক', color: '#f87171', items: ['postgres listen 0.0.0.0:5432', 'redis bind 0.0.0.0', 'docker -p 6379:6379 (public!)'] }, { title: '✔ নিরাপদ', color: '#4ade80', items: ['postgres listen 127.0.0.1 / private IP', 'redis bind 127.0.0.1 + password', 'docker -p 127.0.0.1:6379:6379'] }],
         warn: 'Docker-এর -p flag UFW firewall bypass করে iptables-এ rule বসায় — “firewall আছে তো” ভেবে নিশ্চিন্ত থেকো না।',
       },
@@ -316,7 +316,7 @@ export default [
           { id: 'p443', x: 55, y: 20, icon: '🔒', label: ':443 nginx' },
           { id: 'p22', x: 55, y: 50, icon: '🔑', label: ':22 sshd' },
           { id: 'p5432', x: 55, y: 82, icon: '🗄️', label: ':5432 postgres' },
-          { id: 'p3000', x: 85, y: 45, icon: '⚙️', label: ':3000 Fiber' },
+          { id: 'p3000', x: 85, y: 45, icon: '⚙️', label: ':3000 Node app' },
           { id: 'p6379', x: 85, y: 80, icon: '⚡', label: ':6379 redis' },
         ],
         edges: [['u1', 'fw'], ['u2', 'fw'], ['hk', 'fw'], ['fw', 'p443'], ['fw', 'p22'], ['fw', 'p5432'], ['p443', 'p3000'], ['p3000', 'p6379'], ['p3000', 'p5432']],
@@ -327,8 +327,8 @@ export default [
           ] },
           { id: 'proxy', name: 'Reverse proxy → localhost', hops: [
             { path: ['u1', 'fw', 'p443'], label: 'GET /api/orders', desc: 'Request nginx-এ এলো।' },
-            { path: ['p443', 'p3000'], label: 'proxy_pass 127.0.0.1:3000', desc: 'Nginx ভেতরে localhost:3000-এ Go Fiber-কে পাঠাল। Fiber শুধু 127.0.0.1-এ শোনে — বাইরে থেকে সরাসরি পৌঁছানো অসম্ভব।' },
-            { path: ['p3000', 'p6379'], label: 'GET cache:orders:7', status: 'ok', desc: 'Fiber localhost-এর Redis থেকে cache পড়ল। সব internal port, সব নিরাপদ।' },
+            { path: ['p443', 'p3000'], label: 'proxy_pass 127.0.0.1:3000', desc: 'Nginx ভেতরে localhost:3000-এ চলা Node.js app-কে পাঠাল। App শুধু 127.0.0.1-এ শোনে — বাইরে থেকে সরাসরি পৌঁছানো অসম্ভব।' },
+            { path: ['p3000', 'p6379'], label: 'GET cache:orders:7', status: 'ok', desc: 'App localhost-এর Redis থেকে cache পড়ল। সব internal port, সব নিরাপদ।' },
           ] },
           { id: 'scan', name: 'Port scan আক্রমণ', kind: 'attack', hops: [
             { path: ['hk', 'fw', 'p22'], label: 'SYN :22', status: 'evil', desc: '😈 Bot পুরো internet scan করছে (masscan/nmap)। 22 খোলা পেল → এখন password brute-force শুরু করবে (তাই SSH key + fail2ban)।' },
@@ -337,7 +337,7 @@ export default [
           ] },
         ],
       },
-      { type: 'terminal', preset: 'ports', title: 'Server-এ port খোঁজো (ss)', intro: 'তুমি তোমার VPS-এ SSH করে আছ। কোন port-এ কে শুনছে, কারা connected, আর কোনটা বিপজ্জনকভাবে খোলা — খুঁজে বের করো।' },
+      { type: 'terminal', preset: 'ports', title: 'Server-এ port খোঁজো (ss)', intro: 'তুমি একটি Linux server-এ SSH দিয়ে ঢুকে আছ। কোন port-এ কে শুনছে, কারা connected, আর কোনটা বিপজ্জনকভাবে খোলা — খুঁজে বের করো।' },
       {
         type: 'classify',
         title: 'Port চেনো',

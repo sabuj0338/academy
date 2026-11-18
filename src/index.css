@@ -1,0 +1,54 @@
+/* ───────── CSS-এর প্রবেশপথ
+   নতুন UI (nav, page, layout) লেখা হয় Tailwind utility দিয়ে।
+   Lab ও lesson-block-এর পুরনো CSS নিচের layer-গুলোতে থাকে — utilities সবার শেষে, তাই দরকার হলে Tailwind class সবসময় জেতে।
+   Tailwind-এর preflight (reset) ইচ্ছে করে বাদ — নইলে ১১৬টি lab-এর সাধারণ element-এর চেহারা বদলে যেত। */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import './styles.css' layer(base);
+@import './labs.css' layer(components);
+@import './engines.css' layer(components);
+@import './lesson.css' layer(components);
+@import './motion.css' layer(components);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+
+/* design token (styles.css) → Tailwind রং/font। Theme বা .stage বদলালে utility নিজে থেকেই বদলায়।
+   ব্যবহার: bg-panel, bg-bg2, text-ink, text-muted, border-line, text-brand, bg-brand/10 … */
+@theme inline {
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-brand: var(--brand-solid);
+  --color-ok: var(--green);
+  --color-bad: var(--red);
+  --color-warn: var(--amber);
+  --color-accent: var(--violet);
+  --color-tc: var(--tc);
+  --color-tc-ink: var(--tc-ink);
+  --color-c: var(--c);
+  --color-c-ink: var(--c-ink);
+  --shadow-card: var(--elev);
+  --shadow-pop: var(--elev-lg);
+  --animate-rise: rise .5s cubic-bezier(.2, .8, .2, 1) both;
+  --animate-pop: popin .22s cubic-bezier(.2, .8, .2, 1) both;
+  --animate-floaty: floaty 5s ease-in-out infinite;
+  --animate-drift: drift 10s ease-in-out infinite;
+  --animate-glow: glowpulse 2s infinite;
+}
+
+@utility bg-brandgrad { background: var(--brand); }
+@utility bg-tcgrad { background: var(--g); }
+@utility text-grad { background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@utility lift {
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .2s, border-color .2s;
+  &:hover { transform: translateY(-4px); box-shadow: var(--elev-lg); }
+}

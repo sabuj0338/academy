@@ -6,7 +6,7 @@ export default {
   http: {
     terms: [['Request', 'Client-এর পাঠানো চিঠি: method + URL + header + body'], ['Response', 'Server-এর উত্তর: status + header + body'], ['Status code', '200 সফল, 401 পরিচয় নেই, 403 অনুমতি নেই, 500 server ভুল'], ['Header', 'চিঠির খামের উপরের তথ্য (Cookie, Authorization)'], ['Attack surface', 'যেসব জায়গা দিয়ে attacker ঢুকতে পারে']],
     steps: {
-      0: { chain: [['🧑', 'Browser', 'request'], ['☁️', 'Cloudflare'], ['🔀', 'Nginx'], ['⚙️', 'Go Fiber'], ['🗄️', 'PostgreSQL'], ['📨', 'Response']] },
+      0: { chain: [['🧑', 'Browser', 'request'], ['☁️', 'Cloudflare'], ['🔀', 'Nginx'], ['⚙️', 'Node.js (Express)'], ['🗄️', 'PostgreSQL'], ['📨', 'Response']] },
       1: { analogy: 'Request হলো রেস্টুরেন্টের অর্ডার স্লিপ: “কী চাই” (method + URL), “আমি কে” (header-এ token), আর বিস্তারিত (body)। মনে রেখো — যে কেউ নিজের হাতে স্লিপ লিখতে পারে, তাই রান্নাঘর প্রতিটি স্লিপ যাচাই করে।' },
       4: { compare: V({ title: '😇 সাধারণ user', items: ['তোমার বানানো UI ব্যবহার করে', 'বোতাম যা পাঠায় তাই পাঠায়', 'DevTools খোলে না'] }, { title: '😈 Attacker', items: ['UI-ই লাগে না — curl, Burp, script', 'যেকোনো field বদলায়, id বাড়ায়', 'Header নকল করে'] }) },
     },
@@ -124,7 +124,7 @@ export default {
   massassign: {
     terms: [['Mass assignment', 'Request body সরাসরি model-এ বসিয়ে দেওয়া'], ['DTO', 'শুধু অনুমোদিত field-এর আলাদা struct'], ['Allowlist binding', 'কোন field বদলানো যাবে তা আগেই ঠিক করা'], ['Excessive data exposure', 'দরকারের বেশি field response-এ পাঠানো'], ['OWASP API Top 10', 'API-এর সবচেয়ে সাধারণ ১০টি ঝুঁকি']],
     steps: {
-      1: { analogy: 'Profile ফর্মে শুধু “নাম” আর “ঠিকানা”র ঘর। কিন্তু কেউ নিজে থেকে কাগজের নিচে লিখে দিল “role: admin, balance: 1000000” — আর অফিস চোখ বন্ধ করে পুরো কাগজটাই ফাইলে তুলে নিল।', compare: V({ title: '✖ সরাসরি bind', color: '#f87171', items: ['c.BodyParser(&user) → db.Save(user)', 'Client role/is_admin পাঠালেই বদলে যায়'] }, { title: '✔ DTO', color: '#4ade80', items: ['type UpdateProfile struct { Name, Address }', 'শুধু এই field copy', 'role কেবল admin API-তে'] }) },
+      1: { analogy: 'Profile ফর্মে শুধু “নাম” আর “ঠিকানা”র ঘর। কিন্তু কেউ নিজে থেকে কাগজের নিচে লিখে দিল “role: admin, balance: 1000000” — আর অফিস চোখ বন্ধ করে পুরো কাগজটাই ফাইলে তুলে নিল।', compare: V({ title: '✖ সরাসরি bind', color: '#f87171', items: ['User.update(req.body) — যা এল সব save', 'Client role/is_admin পাঠালেই বদলে যায়'] }, { title: '✔ DTO', color: '#4ade80', items: ['z.object({ name, address }).strict()', 'শুধু এই field copy', 'role কেবল admin API-তে'] }) },
       2: { analogy: 'Waiter-কে এক গ্লাস পানি চাইলে সে পুরো ফ্রিজ টেবিলে রেখে গেল — “যা দরকার নিয়ে নাও”। Frontend যা দেখায় না তা-ও network tab-এ সবাই দেখতে পায়।' },
     },
   },
@@ -201,7 +201,7 @@ export default {
   nginx: {
     terms: [['Reverse proxy', 'App-এর সামনে বসে request সামলায়'], ['server_tokens off', 'Version লুকানো'], ['client_max_body_size', 'Upload-এর সর্বোচ্চ আকার'], ['limit_req', 'Nginx-স্তরের rate limit'], ['real_ip', 'Cloudflare-এর পেছনে আসল visitor IP']],
     steps: {
-      0: { analogy: 'Nginx হলো অফিসের রিসেপশন: প্রতিটি অতিথি আগে এখানে আসে। রিসেপশনিস্ট ব্যাগের আকার দেখে (body size), বেশিবার এলে থামায় (rate limit), আর ভেতরের অফিসের ঠিকানা বাইরে বলে না।', chain: [['🌐', 'Visitor'], ['🔀', 'Nginx', 'TLS, header, limit'], ['⚙️', '127.0.0.1:3000', 'Go Fiber']] },
+      0: { analogy: 'Nginx হলো অফিসের রিসেপশন: প্রতিটি অতিথি আগে এখানে আসে। রিসেপশনিস্ট ব্যাগের আকার দেখে (body size), বেশিবার এলে থামায় (rate limit), আর ভেতরের অফিসের ঠিকানা বাইরে বলে না।', chain: [['🌐', 'Visitor'], ['🔀', 'Nginx', 'TLS, header, limit'], ['⚙️', '127.0.0.1:3000', 'Node.js (Express)']] },
       2: { compare: V({ title: '✖ real_ip ছাড়া', color: '#f87171', items: ['সব request Cloudflare-এর IP থেকে আসে মনে হয়', 'Rate limit সবাইকে একসাথে আটকায়', 'Log অর্থহীন'] }, { title: '✔ real_ip সহ', color: '#4ade80', items: ['set_real_ip_from <CF ranges>', 'real_ip_header CF-Connecting-IP', 'শুধু CF range বিশ্বাস — নইলে header নকল'] }) },
     },
   },
@@ -276,7 +276,7 @@ export default {
     terms: [['Dependency', 'অন্যের লেখা library যা তুমি ব্যবহার করো'], ['Supply chain attack', 'Library-র মাধ্যমে আক্রমণ'], ['CVE', 'প্রকাশিত দুর্বলতার নম্বর'], ['Lockfile', 'ঠিক কোন version install হবে তা স্থির'], ['Typosquatting', 'reacct-এর মতো কাছাকাছি নামের নকল package']],
     steps: {
       0: { analogy: 'তোমার বাড়ির ১০০০টি ইটের ৯৫০টি অন্যের বানানো। কোনো এক কারখানা ভুল (বা ইচ্ছাকৃত খারাপ) ইট পাঠালে পুরো দেয়াল ঝুঁকিতে — আর তুমি জানোই না কোন ইট কোথা থেকে এসেছে।', chain: [['📦', 'তোমার app'], ['📦', 'next'], ['📦', 'sub-dependency'], ['📦', 'sub-sub…'], ['☠️', 'একটি compromised package']] },
-      1: { compare: V({ title: '🟦 Node / Next.js', items: ['npm audit', 'Dependabot / Renovate', 'npm ci + lockfile'] }, { title: '🐹 Go', items: ['govulncheck ./...', 'go.sum যাচাই', 'Trivy দিয়ে container scan'] }) },
+      1: { compare: V({ title: '🟦 Node.js / npm', items: ['npm audit', 'Dependabot / Renovate', 'npm ci + lockfile'] }, { title: '🐍 Python (তুলনার জন্য)', items: ['pip-audit', 'requirements.txt-এ version pin', 'Trivy দিয়ে container scan'] }) },
     },
   },
   scanning: {

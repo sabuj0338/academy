@@ -60,7 +60,7 @@ export function Journey({ items, color }) {
   }, [auto, items.length]);
   const [ic, t, sub] = items[at];
   return (
-    <div className="journey" style={{ '--c': color }}>
+    <div className="journey stage" style={{ '--c': color }}>
       <div className="chain">
         {items.map(([i, title, s], k) => (
           <React.Fragment key={k}>
@@ -132,7 +132,7 @@ export function Seq({ title, actors, msgs }) {
   const cur = msgs[Math.max(n - 1, 0)];
   const curColor = KIND[cur[4]] || 'var(--tc, var(--cyan))';
   return (
-    <div className="viz seq">
+    <div className="viz stage seq">
       {title && <div className="viz-h">🎬 {title}</div>}
       <div className="seq-actors" style={{ gridTemplateColumns: `repeat(${actors.length}, 1fr)` }}>
         {actors.map(([ic, name], i) => (
@@ -181,7 +181,7 @@ export function Anatomy({ title, parts, note }) {
   const colorOf = (i) => KIND[parts[i][3]] || PALETTE[labeled.indexOf(i) % PALETTE.length];
   const S = parts[sel];
   return (
-    <div className="viz anatomy">
+    <div className="viz stage anatomy">
       {title && <div className="viz-h">🔬 {title}</div>}
       <div className="an-line">
         {parts.map(([text, label], i) => {
@@ -218,7 +218,7 @@ export function Bars({ title, items, scale, note }) {
   const f = scale === 'log' ? (v) => Math.log10(v + 1) : scale === 'sqrt' ? Math.sqrt : (v) => v;
   const max = Math.max(...items.map((i) => f(i[1])));
   return (
-    <div className="viz bars">
+    <div className="viz stage bars">
       {title && <div className="viz-h">📊 {title}</div>}
       {items.map(([label, value, display, kind], i) => (
         <div key={i} className="bar-row">
@@ -237,7 +237,7 @@ export function Bars({ title, items, scale, note }) {
 export function Layers({ title, items }) {
   const [open, setOpen] = useState(0);
   return (
-    <div className="viz layers">
+    <div className="viz stage layers">
       {title && <div className="viz-h">🧱 {title}</div>}
       {items.map(([ic, t, d], i) => (
         <button key={i} className={'layer' + (open === i ? ' on' : '')} style={{ '--c': PALETTE[i % PALETTE.length], animationDelay: i * 0.07 + 's' }} onClick={() => setOpen(i)} onMouseEnter={() => setOpen(i)}>
@@ -277,7 +277,7 @@ export function MindMap({ lesson, onJump }) {
     return [50 + Math.cos(a) * 32, 50 + Math.sin(a) * 36];
   });
   return (
-    <div className="mm">
+    <div className="mm stage">
       <svg className="mm-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {pos.map(([x, y], i) => <line key={i} x1="50" y1="50" x2={x} y2={y} style={{ animationDelay: i * 0.1 + 's' }} />)}
       </svg>

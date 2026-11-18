@@ -102,7 +102,7 @@ export default [
         points: ['.env commit (এবং পরে মুছলেও history-তে থেকে যায়!)', 'Frontend bundle-এ NEXT_PUBLIC_ দিয়ে secret', 'Docker image layer', 'Log ও error message', 'CI/CD log-এ echo $SECRET', 'Slack/ChatGPT-এ paste'],
       },
       {
-        title: 'Next.js-এর বিশেষ সতর্কতা',
+        title: 'Frontend-এর বিশেষ সতর্কতা',
         body: 'NEXT_PUBLIC_ prefix দেওয়া env variable build-এর সময় browser bundle-এ ঢুকে যায় — সবাই দেখতে পারে। Secret কখনো NEXT_PUBLIC_ নয়; শুধু server component / API route-এ ব্যবহার করো।',
         code: [
           { label: 'দুর্বল', lang: 'bash', kind: 'bad', text: 'NEXT_PUBLIC_STRIPE_SECRET=sk_live_…' },
@@ -149,12 +149,12 @@ export default [
       {
         title: 'Password: hash, encrypt নয়',
         body: 'Password কখনো encrypt বা plain রাখবে না — slow, salted hash ব্যবহার করো। SHA-256 খুব দ্রুত (GPU-তে বিলিয়ন/সেকেন্ড) — password-এর জন্য খারাপ।',
-        code: [{ label: 'Go', lang: 'go', kind: 'good', text: 'import "golang.org/x/crypto/bcrypt"\nhash, _ := bcrypt.GenerateFromPassword([]byte(pw), 12)\nerr := bcrypt.CompareHashAndPassword(hash, []byte(input))\n// অথবা argon2id (golang.org/x/crypto/argon2)' }],
+        code: [{ label: 'Node.js · bcrypt', lang: 'js', kind: 'good', text: 'import bcrypt from \'bcrypt\';\n\nconst hash = await bcrypt.hash(password, 12);   // DB-তে শুধু এটা রাখো\nconst ok = await bcrypt.compare(input, hash);   // login-এর সময় মিলিয়ে দেখো\n// অথবা argon2id (npm: argon2)' }],
       },
       {
         title: 'At rest vs in transit',
         body: 'In transit = network-এ চলার সময় (TLS)। At rest = disk/backup-এ থাকার সময়। Disk encryption (LUKS, cloud volume encryption) চুরি হওয়া disk থেকে রক্ষা করে, কিন্তু চলমান DB-তে SQLi থেকে নয়। অতি sensitive field (NID, phone, bank account) application-level-এ AES-256-GCM দিয়ে encrypt করো।',
-        code: [{ label: 'Go · AES-GCM', lang: 'go', kind: 'good', text: 'block, _ := aes.NewCipher(key)      // 32-byte key, env/KMS থেকে\ngcm, _ := cipher.NewGCM(block)\nnonce := make([]byte, gcm.NonceSize())\nrand.Read(nonce)                    // প্রতিবার নতুন nonce!\nct := gcm.Seal(nonce, nonce, plaintext, nil)' }],
+        code: [{ label: 'Node.js · AES-256-GCM', lang: 'js', kind: 'good', text: 'import crypto from \'node:crypto\';\n\nconst iv = crypto.randomBytes(12);                              // প্রতিবার নতুন nonce!\nconst cipher = crypto.createCipheriv(\'aes-256-gcm\', key, iv);   // 32-byte key, env/KMS থেকে\nconst ct = Buffer.concat([cipher.update(plaintext), cipher.final()]);\nconst stored = Buffer.concat([iv, cipher.getAuthTag(), ct]);    // তিনটিই একসাথে রাখো' }],
         warn: 'Key আর encrypted data একই জায়গায় রাখলে encryption অর্থহীন। Key → KMS/secret manager।',
       },
     ],

@@ -90,7 +90,7 @@ export default [
     steps: [
       {
         title: 'Monolith — খারাপ শব্দ নয়!',
-        body: 'Monolith-এ user, product, order, payment — সব একটি Go/Next.js app-এ, একটি database-এ। Function call দিয়ে কথা হয় (network নয়), একটি transaction-এ সব হয়, debug সহজ, deploy একটা। Shopify, Stack Overflow বিশাল monolith দিয়েই চলে।',
+        body: 'Monolith-এ user, product, order, payment — সব একটি app-এ, একটি database-এ। Function call দিয়ে কথা হয় (network নয়), একটি transaction-এ সব হয়, debug সহজ, deploy একটা। Shopify, Stack Overflow বিশাল monolith দিয়েই চলে।',
         compare: [{ title: '👍 সুবিধা', color: '#4ade80', items: ['সহজ develop, test, deploy', 'দ্রুত (function call)', 'একটি DB transaction', 'ছোট team-এর জন্য সেরা'] }, { title: '👎 অসুবিধা (বড় হলে)', color: '#f87171', items: ['ছোট পরিবর্তনেও পুরো deploy', 'একটি bug পুরো app ফেলে দিতে পারে', 'অংশ আলাদাভাবে scale করা যায় না', 'বড় team-এ একে অপরের পায়ে পা'] }],
       },
       {
@@ -212,7 +212,7 @@ export default [
       },
       {
         title: 'gRPC — service-এর মাঝে দ্রুত কথা',
-        body: 'gRPC HTTP/2-এর উপর Protobuf (binary) ব্যবহার করে — JSON-এর চেয়ে ছোট ও দ্রুত, আর .proto file থেকে Go/Java/Python client code নিজে তৈরি হয় (typed contract)। Streaming সমর্থন করে। Browser-এ সরাসরি ভালো চলে না, তাই মূলত microservice ↔ microservice।',
+        body: 'gRPC HTTP/2-এর উপর Protobuf (binary) ব্যবহার করে — JSON-এর চেয়ে ছোট ও দ্রুত, আর .proto file থেকে JavaScript/Java/Python/Go client code নিজে তৈরি হয় (typed contract)। Streaming সমর্থন করে। Browser-এ সরাসরি ভালো চলে না, তাই মূলত microservice ↔ microservice।',
         compare: [{ title: '🌐 REST/JSON', items: ['সবাই বোঝে, browser-friendly', 'HTTP cache চলে', 'Text, একটু বড়', 'Public API'] }, { title: '⚡ gRPC/Protobuf', items: ['Typed contract (.proto)', 'Binary, দ্রুত, ছোট', 'Streaming', 'Internal service-to-service'] }],
       },
       {
@@ -271,7 +271,7 @@ export default [
           { id: 'grpc', name: 'gRPC (service ↔ service)', actors: ['api', 'svc'], msgs: [
             { from: 'api', to: 'svc', label: 'OrderService.ListOrders (protobuf)', color: '#4ade80', desc: 'Backend থেকে order-service-কে typed, binary call — HTTP/2-এ।' },
             { from: 'svc', to: 'api', label: 'stream Order {…}', color: '#4ade80', desc: 'Server streaming: order-গুলো একটা একটা করে আসতে থাকে।' },
-            { from: 'svc', to: 'api', label: 'stream Order {…}', color: '#4ade80', state: { api: 'typed ✓' }, desc: '.proto contract থেকে Go code তৈরি — field-এর নাম ভুল লিখলে compile-ই হবে না।' },
+            { from: 'svc', to: 'api', label: 'stream Order {…}', color: '#4ade80', state: { api: 'typed ✓' }, desc: '.proto contract থেকে code নিজে তৈরি হয় — field-এর নাম ভুল লিখলে compile-ই হবে না।' },
           ] },
         ],
       },
@@ -286,7 +286,7 @@ export default [
           { text: 'Webhook (bKash payment callback)', bucket: 'rest', explain: 'সরল HTTP POST।' },
           { text: 'বিভিন্ন screen-এর জন্য নমনীয় mobile app', bucket: 'gql', explain: 'Client যা চায় তাই।' },
           { text: 'অনেক source-এর data মিলিয়ে dashboard', bucket: 'gql', explain: 'একটি graph।' },
-          { text: 'Go microservice ↔ Go microservice', bucket: 'grpc', explain: 'Typed, দ্রুত।' },
+          { text: 'Microservice ↔ microservice (ভেতরের যোগাযোগ)', bucket: 'grpc', explain: 'Typed, দ্রুত।' },
           { text: 'Real-time bidirectional stream (internal)', bucket: 'grpc', explain: 'gRPC streaming।' },
         ],
       },

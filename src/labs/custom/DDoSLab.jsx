@@ -105,7 +105,7 @@ export default function DDoSLab({ onComplete }) {
           <div className="metric"><span>Origin-এ পৌঁছানো attack</span><b className="mono">{Math.round(m.pass).toLocaleString()} req/s</b></div>
           <div className="metric"><span>Server CPU</span><b style={{ color: m.cpu > 90 ? 'var(--red)' : m.cpu > 60 ? 'var(--amber)' : 'var(--green)' }}>{m.cpu.toFixed(0)}%</b></div>
           <div className="metric"><span>আসল user সফল</span><b style={{ color: m.legitOk > 95 ? 'var(--green)' : 'var(--red)' }}>{m.legitOk.toFixed(1)}%</b></div>
-          {bypass && !d.lock && <div className="note bad">💥 Origin IP leak! Cloudflare-এর সব সুরক্ষা bypass — attacker সরাসরি তোমার VPS-এ।</div>}
+          {bypass && !d.lock && <div className="note bad">💥 Origin IP leak! Cloudflare-এর সব সুরক্ষা bypass — attacker সরাসরি তোমার server-এ।</div>}
           {win && <div className="note good">🎉 Origin IP জানা থাকলেও firewall শুধু Cloudflare-কে ঢুকতে দেয়, আর edge-এ WAF/rate limit L7 flood আটকাচ্ছে।</div>}
           {!win && <div className="muted" style={{ fontSize: 13 }}>লক্ষ্য: "Origin IP জেনে সরাসরি আক্রমণ" চালু থাকা অবস্থায় CPU &lt; 60% এবং আসল user &gt; 95%।</div>}
         </div>

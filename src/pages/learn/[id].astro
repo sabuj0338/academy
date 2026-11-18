@@ -1,0 +1,18 @@
+---
+// প্রতিটি lesson-এর নিজস্ব page — lesson-এর লেখা build-এর সময়ই HTML-এ থাকে, তারপর player interactive হয়
+import Base from '../../layouts/Base.astro';
+import LessonView from '../../components/LessonView.jsx';
+import { lessons, trackOf } from '../../data/curriculum.js';
+
+export function getStaticPaths() {
+  return lessons.map((l) => ({
+    params: { id: l.id },
+    props: { title: l.title, description: l.subtitle + ' — ' + trackOf(l.track).bn + ' কোর্স', track: l.track },
+  }));
+}
+const { id } = Astro.params;
+const { title, description, track } = Astro.props;
+---
+<Base title={title} description={description} active="lesson" courseId={track} footer={false}>
+  <LessonView client:load lessonId={id} />
+</Base>

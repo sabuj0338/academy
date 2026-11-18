@@ -19,15 +19,15 @@ export default [
         title: 'Mass Assignment — আক্রমণটা বোঝো',
         body: 'Profile update endpoint পুরো JSON body সরাসরি User struct-এ bind করে DB-তে save করে। UI শুধু name ও bio পাঠায় — কিন্তু attacker নিজে "role":"admin", "balance":999999, "is_verified":true যোগ করে পাঠায়!',
         code: [
-          { label: 'দুর্বল · Go Fiber + GORM', lang: 'go', kind: 'bad', text: 'type User struct {\n    ID      uint\n    Name    string\n    Bio     string\n    Role    string   // 😱 bind হয়ে যাবে\n    Balance int\n}\nvar u User\nc.BodyParser(&u)\ndb.Model(&User{ID: uid}).Updates(u)' },
-          { label: 'নিরাপদ · DTO', lang: 'go', kind: 'good', text: 'type UpdateProfileDTO struct {\n    Name string `json:"name" validate:"required,max=50"`\n    Bio  string `json:"bio"  validate:"max=300"`\n}\nvar in UpdateProfileDTO\nc.BodyParser(&in)\nvalidate.Struct(in)\ndb.Model(&User{}).Where("id = ?", uid).\n   Select("name", "bio").Updates(map[string]any{"name": in.Name, "bio": in.Bio})' },
+          { label: 'দুর্বল · Express + ORM', lang: 'js', kind: 'bad', text: 'app.patch(\'/api/me\', requireLogin, async (req, res) => {\n  // req.body-তে যা আছে সব সরাসরি database-এ 😱\n  await User.update(req.body, { where: { id: req.user.id } });\n  res.sendStatus(204);\n});\n// attacker পাঠায়: { "name": "Rafi", "role": "admin", "balance": 99999 }' },
+          { label: 'নিরাপদ · শুধু অনুমোদিত field (zod)', lang: 'js', kind: 'good', text: 'import { z } from \'zod\';\n\nconst UpdateProfile = z.object({\n  name: z.string().min(1).max(50),\n  bio: z.string().max(300).optional(),\n}).strict();                     // অজানা field (role, balance) এলে error\n\napp.patch(\'/api/me\', requireLogin, async (req, res) => {\n  const input = UpdateProfile.parse(req.body);\n  await User.update(input, { where: { id: req.user.id } });\n  res.sendStatus(204);\n});' },
         ],
       },
       {
         title: 'Excessive Data Exposure',
         body: 'উল্টো দিকের সমস্যা: API পুরো DB object ফেরত দেয় (password_hash, reset_token, internal_note সহ), আর frontend শুধু name দেখায়। Attacker DevTools-এ পুরো response দেখে।',
-        code: [{ label: 'Response DTO', lang: 'go', kind: 'good', text: 'type PublicUser struct {\n    ID   uint   `json:"id"`\n    Name string `json:"name"`\n}\nreturn c.JSON(PublicUser{ID: u.ID, Name: u.Name})' }],
-        tip: 'Go struct-এ `json:"-"` tag sensitive field-কে JSON থেকে বাদ দেয় — কিন্তু explicit response DTO আরও নিরাপদ।',
+        code: [{ label: 'Response-এ শুধু দরকারি field', lang: 'js', kind: 'good', text: 'const toPublicUser = (u) => ({ id: u.id, name: u.name });\nres.json(toPublicUser(user));   // password_hash, email কখনো বাইরে নয়' }],
+        tip: 'Database-এর পুরো object সরাসরি res.json() করো না — শুধু দরকারি field বেছে আলাদা object বানাও (উপরের toPublicUser-এর মতো)।',
       },
     ],
     labs: [
@@ -57,7 +57,7 @@ export default [
     cheat: {
       category: 'API Security', severity: 'high',
       summary: 'Request body সরাসরি model-এ bind করলে attacker লুকানো field (role, balance) বদলায়।',
-      rules: ['Input DTO + validation', 'GORM Select() দিয়ে নির্দিষ্ট column', 'Response DTO — DB model সরাসরি নয়', 'json:"-" sensitive field-এ'],
+      rules: ['Input DTO + validation', 'শুধু অনুমোদিত field (zod .strict())', 'Response DTO — DB model সরাসরি নয়', 'password_hash-এর মতো field কখনো response-এ নয়'],
       checklist: ['প্রতিটি PATCH/PUT-এ role/is_admin/balance পাঠিয়ে test', 'API response-এ password_hash/token আছে?'],
       remember: 'যা পাঠাতে বলোনি তা গ্রহণ কোরো না; যা দেখানোর দরকার নেই তা পাঠিও না।',
     },
@@ -71,7 +71,7 @@ export default [
     title: 'JWT Attacks — গভীরে',
     subtitle: 'alg:none, weak secret, algorithm confusion',
     duration: '৪০ মিনিট',
-    goals: ['alg: none attack', 'দুর্বল HMAC secret brute-force', 'RS256 → HS256 algorithm confusion', 'Go-তে সঠিক JWT verification'],
+    goals: ['alg: none attack', 'দুর্বল HMAC secret brute-force', 'RS256 → HS256 algorithm confusion', 'Node.js-এ সঠিক JWT verification'],
     steps: [
       {
         title: 'JWT verification কোথায় ভুল হয়',
@@ -92,9 +92,9 @@ export default [
         body: 'Server RS256 (public/private key) ব্যবহার করে। Attacker header-এ alg: HS256 দেয় এবং server-এর PUBLIC key (যা সবাই জানে) দিয়ে HMAC sign করে। দুর্বল code একই key variable দিয়ে HS256 verify করলে token valid হয়ে যায়!',
       },
       {
-        title: 'Go-তে সঠিক verification',
+        title: 'Node.js-এ সঠিক verification',
         body: '',
-        code: [{ label: 'golang-jwt/jwt v5', lang: 'go', kind: 'good', text: 'tok, err := jwt.Parse(raw, func(t *jwt.Token) (any, error) {\n    return []byte(os.Getenv("JWT_SECRET")), nil  // ≥ 32 random bytes\n},\n    jwt.WithValidMethods([]string{"HS256"}),   // alg pin করো\n    jwt.WithIssuer("api.example.com"),\n    jwt.WithAudience("web"),\n    jwt.WithExpirationRequired(),\n)\nif err != nil || !tok.Valid { return c.SendStatus(401) }' }],
+        code: [{ label: 'Node.js · jsonwebtoken', lang: 'js', kind: 'good', text: 'import jwt from \'jsonwebtoken\';\n\ntry {\n  const claims = jwt.verify(raw, process.env.JWT_SECRET, {  // secret: ≥ ৩২ random byte\n    algorithms: [\'HS256\'],   // alg pin করো — token-এর header-এর কথা বিশ্বাস নয়\n    issuer: \'api.example.com\',\n    audience: \'web\',\n  });                        // exp থাকলে মেয়াদও নিজেই যাচাই করে\n  req.user = claims;\n} catch {\n  return res.sendStatus(401);\n}' }],
         points: ['Algorithm server-এ pin (WithValidMethods)', 'Secret ≥ 256-bit random: openssl rand -base64 32', 'exp, iss, aud যাচাই', 'kid header-কে path/SQL-এ ব্যবহার নয়', 'Key rotation পরিকল্পনা'],
       },
     ],
@@ -151,7 +151,7 @@ export default [
         intro: 'সঠিক PKCE flow দেখো, তারপর দেখো PKCE ছাড়া intercept হওয়া code কীভাবে ব্যবহার হয় — এবং PKCE কীভাবে আটকায়।',
         nodes: [
           { id: 'user', label: 'User', icon: '🧑', sub: 'Browser' },
-          { id: 'app', label: 'তোমার App', icon: '📱', sub: 'Next.js + Fiber' },
+          { id: 'app', label: 'তোমার App', icon: '📱', sub: 'React + Node.js' },
           { id: 'evil', label: 'Attacker', icon: '😈', sub: 'Malicious app' },
           { id: 'idp', label: 'Google', icon: '🔐', sub: 'Auth Server' },
         ],
@@ -201,7 +201,7 @@ export default [
     title: 'Rate Limiting ও API Abuse',
     subtitle: 'Unrestricted Resource Consumption',
     duration: '৩০ মিনিট',
-    goals: ['Token bucket ও sliding window algorithm', 'Pagination abuse (limit=1000000)', 'Business logic abuse (OTP flood, coupon)', 'Fiber + Redis + Cloudflare-এ limit'],
+    goals: ['Token bucket ও sliding window algorithm', 'Pagination abuse (limit=1000000)', 'Business logic abuse (OTP flood, coupon)', 'App, Redis ও CDN-এ limit'],
     steps: [
       {
         title: 'আক্রমণটা বোঝো',
@@ -215,8 +215,8 @@ export default [
       {
         title: 'স্তরে স্তরে limit',
         body: '',
-        points: ['Cloudflare Rate Limiting Rules — edge-এ, origin-এ পৌঁছানোর আগেই', 'Nginx limit_req — প্রতি IP', 'Fiber limiter + Redis — প্রতি user/API key/endpoint', 'Business limit — প্রতি phone number দিনে ৫টি OTP', 'Pagination: limit সর্বোচ্চ 100 clamp', 'Timeout ও body size limit'],
-        code: [{ label: 'Pagination clamp', lang: 'go', kind: 'good', text: 'limit := c.QueryInt("limit", 20)\nif limit < 1 || limit > 100 { limit = 20 }' }],
+        points: ['Cloudflare Rate Limiting Rules — edge-এ, origin-এ পৌঁছানোর আগেই', 'Nginx limit_req — প্রতি IP', 'App-এর rate limiter + Redis — প্রতি user/API key/endpoint', 'Business limit — প্রতি phone number দিনে ৫টি OTP', 'Pagination: limit সর্বোচ্চ 100 clamp', 'Timeout ও body size limit'],
+        code: [{ label: 'Pagination clamp', lang: 'js', kind: 'good', text: 'let limit = parseInt(req.query.limit, 10) || 20;\nif (limit < 1 || limit > 100) limit = 20;' }],
       },
     ],
     labs: [{ type: 'tokenbucket', title: 'Token Bucket Visualizer', intro: 'Bucket-এর আকার ও refill rate বদলাও, তারপর normal user ও bot-এর traffic পাঠিয়ে দেখো কে 429 পায়। লক্ষ্য: bot-কে আটকাও কিন্তু normal user যেন কখনো ব্লক না হয়।' }],
@@ -241,7 +241,7 @@ export default [
     title: 'CORS Misconfiguration',
     subtitle: 'কোন site তোমার API-র response পড়তে পারবে',
     duration: '২৫ মিনিট',
-    goals: ['Same-Origin Policy কী', 'CORS header কীভাবে কাজ করে', 'Origin reflection + credentials-এর বিপদ', 'Fiber-এ সঠিক CORS'],
+    goals: ['Same-Origin Policy কী', 'CORS header কীভাবে কাজ করে', 'Origin reflection + credentials-এর বিপদ', 'Express-এ সঠিক CORS'],
     steps: [
       {
         title: 'Same-Origin Policy (SOP)',
@@ -251,8 +251,8 @@ export default [
         title: 'বিপজ্জনক configuration',
         body: 'সবচেয়ে খারাপ: request-এর Origin header যা-ই হোক, সেটাই Access-Control-Allow-Origin-এ ফেরত দেওয়া, সাথে Allow-Credentials: true। তখন evil.com-এর JS user-এর cookie সহ API call করে private data পড়তে পারে।',
         code: [
-          { label: 'দুর্বল', lang: 'go', kind: 'bad', text: 'app.Use(cors.New(cors.Config{\n    AllowOriginsFunc: func(origin string) bool { return true }, // 😱\n    AllowCredentials: true,\n}))' },
-          { label: 'নিরাপদ', lang: 'go', kind: 'good', text: 'app.Use(cors.New(cors.Config{\n    AllowOrigins:     "https://app.example.com, https://admin.example.com",\n    AllowCredentials: true,\n    AllowMethods:     "GET,POST,PATCH,DELETE",\n}))' },
+          { label: 'দুর্বল', lang: 'js', kind: 'bad', text: 'import cors from \'cors\';\n\napp.use(cors({\n  origin: true,          // 😱 যে origin আসে, সেটাকেই অনুমতি\n  credentials: true,\n}));' },
+          { label: 'নিরাপদ', lang: 'js', kind: 'good', text: 'app.use(cors({\n  origin: [\'https://app.example.com\', \'https://admin.example.com\'],\n  credentials: true,\n  methods: [\'GET\', \'POST\', \'PATCH\', \'DELETE\'],\n}));' },
         ],
         points: ['Origin reflection + credentials = সবচেয়ে বিপজ্জনক', '"null" origin allow করা (sandboxed iframe থেকে আসে)', 'Regex ভুল: example.com.evil.com মিলে যায়', '* + credentials browser নিজেই নিষেধ করে'],
       },
@@ -285,7 +285,7 @@ export default [
     title: 'Mobile: Insecure Storage ও API Key Exposure',
     subtitle: 'APK খুললেই সব দেখা যায়',
     duration: '৩৫ মিনিট',
-    goals: ['Reverse engineering কতটা সহজ', 'APK/IPA-তে hardcoded secret', 'SharedPreferences vs Keystore/Keychain', 'Flutter-এ flutter_secure_storage'],
+    goals: ['Reverse engineering কতটা সহজ', 'APK/IPA-তে hardcoded secret', 'SharedPreferences vs Keystore/Keychain', 'Mobile app-এ secure storage (Keychain/Keystore)'],
     steps: [
       {
         title: 'App binary = public document',
@@ -296,16 +296,16 @@ export default [
         title: 'Hardcoded API Key',
         body: 'Firebase config, Google Maps key সাধারণত public হতে পারে (restriction দিয়ে)। কিন্তু Stripe secret key, AWS key, OpenAI key, admin token — কখনো app-এ নয়। এগুলো backend-এ রাখো, app backend-কে call করবে।',
         code: [
-          { label: 'দুর্বল · Flutter', lang: 'dart', kind: 'bad', text: "const openAiKey = 'sk-live-9f8a7…';\nhttp.post(Uri.parse('https://api.openai.com/v1/…'),\n  headers: {'Authorization': 'Bearer $openAiKey'});" },
-          { label: 'নিরাপদ', lang: 'dart', kind: 'good', text: "// App → তোমার Go Fiber backend (user auth সহ)\n// Backend → OpenAI (secret server-এর env-এ)\nhttp.post(Uri.parse('https://api.example.com/ai/ask'),\n  headers: {'Authorization': 'Bearer $userAccessToken'});" },
+          { label: 'দুর্বল · React Native', lang: 'js', kind: 'bad', text: 'const OPENAI_KEY = \'sk-live-9f8a7…\';   // 😱 app-এর ভেতরে secret\nfetch(\'https://api.openai.com/v1/…\', {\n  headers: { Authorization: `Bearer ${OPENAI_KEY}` },\n});' },
+          { label: 'নিরাপদ', lang: 'js', kind: 'good', text: '// App → তোমার নিজের backend (user login সহ)\n// Backend → OpenAI (secret থাকে শুধু server-এর env-এ)\nfetch(\'https://api.example.com/ai/ask\', {\n  headers: { Authorization: `Bearer ${userAccessToken}` },\n});' },
         ],
       },
       {
         title: 'Insecure Local Storage',
         body: 'SharedPreferences (Android) ও UserDefaults (iOS) plain text XML/plist — rooted/jailbroken device-এ বা backup থেকে পড়া যায়।',
         code: [
-          { label: 'দুর্বল', lang: 'dart', kind: 'bad', text: "final prefs = await SharedPreferences.getInstance();\nprefs.setString('refresh_token', token);" },
-          { label: 'নিরাপদ', lang: 'dart', kind: 'good', text: "const storage = FlutterSecureStorage(\n  aOptions: AndroidOptions(encryptedSharedPreferences: true));\nawait storage.write(key: 'refresh_token', value: token);\n// Android Keystore / iOS Keychain ব্যবহার করে" },
+          { label: 'দুর্বল', lang: 'js', kind: 'bad', text: 'import AsyncStorage from \'@react-native-async-storage/async-storage\';\nawait AsyncStorage.setItem(\'refresh_token\', token);   // 😱 সাধারণ, encrypt-হীন file' },
+          { label: 'নিরাপদ', lang: 'js', kind: 'good', text: 'import * as SecureStore from \'expo-secure-store\';\nawait SecureStore.setItemAsync(\'refresh_token\', token);\n// iOS Keychain / Android Keystore ব্যবহার করে' },
         ],
         points: ['Token → Keystore/Keychain', 'Log-এ (print/debugPrint) token নয়', 'android:allowBackup="false"', 'Screenshot-এ sensitive screen: FLAG_SECURE', 'Clipboard-এ OTP/password নয়'],
       },
@@ -316,14 +316,14 @@ export default [
     ],
     labs: [{ type: 'mobile', title: 'APK Inspector Lab', intro: 'একটি নমুনা "ShopBD" app-এর decompiled ফাইল ও device storage ঘেঁটে দেখো। ৫টি security সমস্যা খুঁজে বের করো এবং প্রতিটি ঠিক করো।' }],
     quiz: [
-      { q: 'Stripe secret key কোথায় রাখা উচিত?', options: ['Flutter const', 'Obfuscated string', 'Backend server env', '.env bundled in app'], answer: 2, explain: 'App-এর ভেতরের সব কিছু extract করা যায়।' },
-      { q: 'Flutter-এ refresh token কোথায় রাখবে?', options: ['SharedPreferences', 'flutter_secure_storage', 'Text file', 'SQLite plain'], answer: 1, explain: 'Keystore/Keychain।' },
+      { q: 'Stripe secret key কোথায় রাখা উচিত?', options: ['App-এর code-এ const হিসেবে', 'Obfuscated string', 'Backend server env', '.env bundled in app'], answer: 2, explain: 'App-এর ভেতরের সব কিছু extract করা যায়।' },
+      { q: 'Mobile app-এ refresh token কোথায় রাখবে?', options: ['AsyncStorage / SharedPreferences', 'SecureStore (Keychain/Keystore)', 'Text file', 'SQLite plain'], answer: 1, explain: 'Keystore/Keychain।' },
       { q: 'Obfuscation কী করে?', options: ['Secret সম্পূর্ণ লুকায়', 'Reverse engineering কঠিন ও ধীর করে', 'Encryption', 'কিছুই না'], answer: 1, explain: 'থামায় না।' },
     ],
     cheat: {
       category: 'Mobile Security', severity: 'high',
       summary: 'App binary public — ভেতরের সব extract করা যায়। Device storage নিরাপদ নয়।',
-      rules: ['Secret key backend-এ, app-এ নয়', 'Token → Keystore/Keychain (flutter_secure_storage)', 'allowBackup=false', 'Release-এ log বন্ধ', 'FLAG_SECURE sensitive screen-এ', 'Deep link input validate', 'Public key-তে restriction (package/SHA)'],
+      rules: ['Secret key backend-এ, app-এ নয়', 'Token → Keystore/Keychain (expo-secure-store)', 'allowBackup=false', 'Release-এ log বন্ধ', 'FLAG_SECURE sensitive screen-এ', 'Deep link input validate', 'Public key-তে restriction (package/SHA)'],
       checklist: ['jadx দিয়ে নিজের APK খুলে "key" খোঁজো', 'SharedPreferences-এ কী আছে?', 'Release build-এ debug log?'],
       commands: ['jadx-gui app.apk', 'adb shell run-as com.app cat shared_prefs/*.xml (debug build)'],
       remember: 'User-এর device তোমার নিয়ন্ত্রণে নেই।',
@@ -343,7 +343,7 @@ export default [
       {
         title: 'Man-in-the-Middle (MITM)',
         body: 'Attacker client ও server-এর মাঝে বসে (public Wi-Fi, ARP spoofing, malicious proxy)। App যদি certificate ঠিকমতো যাচাই না করে, attacker নিজের ভুয়া certificate দিয়ে সব traffic decrypt করে পড়তে ও বদলাতে পারে।',
-        code: [{ label: 'মারাত্মক ভুল · Dart', lang: 'dart', kind: 'bad', text: 'HttpClient()\n  ..badCertificateCallback = (cert, host, port) => true; // 😱 সব cert valid!' }],
+        code: [{ label: 'মারাত্মক ভুল · Node.js', lang: 'js', kind: 'bad', text: 'import https from \'node:https\';\n\nconst agent = new https.Agent({ rejectUnauthorized: false });  // 😱 সব certificate valid!\n// একই ভুল: process.env.NODE_TLS_REJECT_UNAUTHORIZED = \'0\'' }],
       },
       {
         title: 'Certificate Pinning',
@@ -358,9 +358,9 @@ export default [
         title: 'MITM Simulator',
         intro: 'Public Wi-Fi-তে attacker বসে আছে। তিনটি পরিস্থিতি চালিয়ে দেখো।',
         nodes: [
-          { id: 'app', label: 'Mobile App', icon: '📱', sub: 'Flutter' },
+          { id: 'app', label: 'Mobile App', icon: '📱', sub: 'Mobile app' },
           { id: 'mitm', label: 'Attacker Proxy', icon: '🕵️', sub: 'Public Wi-Fi' },
-          { id: 'api', label: 'api.example.com', icon: '⚙️', sub: 'Go Fiber' },
+          { id: 'api', label: 'api.example.com', icon: '⚙️', sub: 'Node.js (Express)' },
         ],
         modes: [
           { id: 'bad', name: 'Cert validation বন্ধ', kind: 'attack', hops: [

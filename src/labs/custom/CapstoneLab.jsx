@@ -18,11 +18,11 @@ const LAYERS = [
     { t: 'GET /.git/config → 200 OK', f: { title: 'Exposed .git directory (source code leak)', sev: 'High', fix: 'location ~ /\\. { deny all; }' } },
     { t: 'client_max_body_size 5m;', ok: true },
   ] },
-  { name: 'Go Fiber API', icon: '⚙️', ev: [
+  { name: 'Node.js API', icon: '⚙️', ev: [
     { t: 'GET /api/orders/:id — WHERE id=$1 (user_id শর্ত নেই)', f: { title: 'IDOR on orders endpoint', sev: 'High', fix: 'AND user_id=$2 + 404' } },
     { t: 'jwt.Parse(raw, keyFunc) — WithValidMethods নেই, secret="shopbd2024"', f: { title: 'Weak JWT secret + no alg pinning', sev: 'Critical', fix: '32-byte random secret + WithValidMethods' } },
     { t: 'db.Query("SELECT … WHERE email = $1", email)', ok: true },
-    { t: 'POST /api/login — rate limit নেই', f: { title: 'No brute-force protection on login', sev: 'Medium', fix: 'Fiber limiter (IP+account) + Redis' } },
+    { t: 'POST /api/login — rate limit নেই', f: { title: 'No brute-force protection on login', sev: 'Medium', fix: 'express-rate-limit (IP+account) + Redis' } },
   ] },
   { name: 'PostgreSQL / Redis', icon: '🗄️', ev: [
     { t: 'Redis: bind 0.0.0.0, protected-mode no, requirepass নেই, port 6379 public', f: { title: 'Unauthenticated public Redis', sev: 'Critical', fix: 'bind 127.0.0.1 + ACL + firewall' } },

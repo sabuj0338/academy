@@ -1,0 +1,7 @@
+---
+import Base from '../../layouts/Base.astro';
+import HandbookPage from '../../views/HandbookPage.jsx';
+---
+<Base title="Cheatsheet library" description="প্রতিটি lesson-এর সারকথা এক পাতায় — নিয়ম, checklist আর মনে রাখার একটি কথা।" active="handbook">
+  <HandbookPage client:load initial="all" />
+</Base>

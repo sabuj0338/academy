@@ -37,7 +37,7 @@ export default [
         title: 'Network কেন দরকার?',
         body: 'একসময় প্রতিটি computer ছিল একা একটি দ্বীপ। একটা file অন্য computer-এ নিতে হলে floppy disk-এ copy করে হেঁটে যেতে হতো! Network এই দ্বীপগুলোর মধ্যে সেতু বানায়, যাতে data নিজে থেকেই চলে যায়।',
         analogy: 'Network হলো পাড়ার রাস্তা। বাড়িগুলো (device) রাস্তা দিয়ে যুক্ত, আর চিঠি (data) রাস্তা ধরে এক বাড়ি থেকে আরেক বাড়িতে যায়। রাস্তা না থাকলে প্রত্যেককে নিজে গিয়ে চিঠি দিতে হতো।',
-        points: ['Resource share: একটি printer, পুরো অফিস ব্যবহার করে', 'Communication: chat, email, video call', 'Data share: Google Drive, file server', 'Remote access: তোমার VPS-এ SSH'],
+        points: ['Resource share: একটি printer, পুরো অফিস ব্যবহার করে', 'Communication: chat, email, video call', 'Data share: Google Drive, file server', 'Remote access: দূরের server-এ SSH দিয়ে ঢোকা'],
       },
       {
         title: 'LAN, WAN, PAN — আকার অনুযায়ী network',
@@ -55,7 +55,7 @@ export default [
         title: 'Client-Server model — কে চায়, কে দেয়',
         body: 'Internet-এর বেশিরভাগ কাজ এভাবে চলে: Client (তোমার browser বা app) একটি request পাঠায়, Server (দূরের শক্তিশালী computer) response ফেরত দেয়। Server ২৪ ঘণ্টা চালু থাকে এবং একসাথে লাখো client-কে সেবা দেয়।',
         analogy: 'রেস্টুরেন্টে তুমি (client) waiter-কে order দাও, রান্নাঘর (server) খাবার বানিয়ে পাঠায়। রান্নাঘর একসাথে অনেক টেবিলের order সামলায়। আর Peer-to-Peer (P2P) হলো পটলাক পার্টি — সবাই খাবার আনে, সবাই খায়, আলাদা রান্নাঘর নেই (যেমন BitTorrent)।',
-        compare: [{ title: '🏢 Client-Server', items: ['কেন্দ্রীয় server', 'নিয়ন্ত্রণ ও নিরাপত্তা সহজ', 'Server ডাউন = সবাই বিপদে', 'YouTube, Facebook, তোমার Go API'] }, { title: '🤝 Peer-to-Peer', items: ['সবাই client, সবাই server', 'কেন্দ্র নেই, ভাঙা কঠিন', 'নিয়ন্ত্রণ ও নিরাপত্তা কঠিন', 'BitTorrent, কিছু video call'] }],
+        compare: [{ title: '🏢 Client-Server', items: ['কেন্দ্রীয় server', 'নিয়ন্ত্রণ ও নিরাপত্তা সহজ', 'Server ডাউন = সবাই বিপদে', 'YouTube, Facebook, যেকোনো app-এর API'] }, { title: '🤝 Peer-to-Peer', items: ['সবাই client, সবাই server', 'কেন্দ্র নেই, ভাঙা কঠিন', 'নিয়ন্ত্রণ ও নিরাপত্তা কঠিন', 'BitTorrent, কিছু video call'] }],
       },
       {
         title: 'Topology — device-গুলো কীভাবে সাজানো',
@@ -283,7 +283,7 @@ export default [
       {
         title: 'Public বনাম Private IP',
         body: '৪৩০ কোটি ঠিকানা পৃথিবীর মানুষের device-এর চেয়ে কম! সমাধান: কিছু ঠিকানা “private” — এগুলো প্রতিটি বাড়ি/অফিসের ভেতরে বারবার ব্যবহার করা যায়। বাইরে যাওয়ার সময় router একটি public IP দিয়ে সবার প্রতিনিধিত্ব করে (NAT — Phase 8)।',
-        compare: [{ title: '🏠 Private (RFC 1918)', color: '#4ade80', items: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', 'Internet থেকে সরাসরি পৌঁছানো যায় না', 'তোমার laptop, VPC-এর server'] }, { title: '🌍 Public', color: '#22d3ee', items: ['পৃথিবীতে অনন্য', 'ISP/registry থেকে বরাদ্দ', 'Internet থেকে পৌঁছানো যায়', 'তোমার VPS, router-এর WAN'] }],
+        compare: [{ title: '🏠 Private (RFC 1918)', color: '#4ade80', items: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', 'Internet থেকে সরাসরি পৌঁছানো যায় না', 'তোমার laptop, VPC-এর server'] }, { title: '🌍 Public', color: '#22d3ee', items: ['পৃথিবীতে অনন্য', 'ISP/registry থেকে বরাদ্দ', 'Internet থেকে পৌঁছানো যায়', 'Cloud server, router-এর WAN'] }],
         points: ['127.0.0.1 = loopback (localhost, নিজের computer)', '169.254.x.x = DHCP থেকে IP পায়নি (সমস্যার লক্ষণ!)', '0.0.0.0 = “সব interface” (server bind-এ)'],
         warn: 'Database-কে 0.0.0.0-তে bind করলে public IP দিয়েও reachable হতে পারে। Postgres/Redis শুধু 127.0.0.1 বা private IP-তে রাখো।',
       },
@@ -392,7 +392,7 @@ export default [
       },
       {
         title: 'Data center-এ কী থাকে?',
-        body: 'তোমার VPS যে data center-এ থাকে, সেখানে হাজার হাজার server rack-এ সাজানো। প্রতিটি rack-এর উপরে একটি switch (Top-of-Rack), সেগুলো বড় spine switch-এ যুক্ত, তারপর edge router internet-এ। Cloud-এ (AWS) এসব software দিয়ে “virtual” — VPC, subnet, route table, internet gateway।',
+        body: 'Cloud-এ ভাড়া নেওয়া server (VPS) যে data center-এ থাকে, সেখানে হাজার হাজার server rack-এ সাজানো। প্রতিটি rack-এর উপরে একটি switch (Top-of-Rack), সেগুলো বড় spine switch-এ যুক্ত, তারপর edge router internet-এ। Cloud-এ (AWS) এসব software দিয়ে “virtual” — VPC, subnet, route table, internet gateway।',
         chain: [['🖥️', 'Server'], ['🔀', 'ToR switch'], ['🕸️', 'Spine switch'], ['🧭', 'Edge router'], ['🌍', 'Internet']],
       },
     ],

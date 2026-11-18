@@ -164,7 +164,7 @@ export default [
       },
       {
         title: 'OpenTelemetry — একবার instrument, যেকোনো backend',
-        body: 'আগে প্রতিটি vendor-এর আলাদা SDK লাগত। OpenTelemetry (OTel) একটি মান: Go/Node app-এ OTel SDK বসাও, OTel Collector-এ পাঠাও, সেখান থেকে Jaeger/Tempo (trace), Prometheus (metric), Loki (log) বা যেকোনো paid service-এ। Vendor বদলালে code বদলাতে হয় না।',
+        body: 'আগে প্রতিটি vendor-এর আলাদা SDK লাগত। OpenTelemetry (OTel) একটি মান: Node.js (বা যেকোনো ভাষার) app-এ OTel SDK বসাও, OTel Collector-এ পাঠাও, সেখান থেকে Jaeger/Tempo (trace), Prometheus (metric), Loki (log) বা যেকোনো paid service-এ। Vendor বদলালে code বদলাতে হয় না।',
         chain: [['⚙️', 'App + OTel SDK'], ['📦', 'OTel Collector'], ['🧵', 'Tempo/Jaeger'], ['📊', 'Prometheus'], ['📜', 'Loki'], ['📈', 'Grafana']],
       },
     ],
@@ -218,7 +218,7 @@ export default [
     steps: [
       {
         title: 'Docker — একবার প্যাক, সব জায়গায় চালাও',
-        code: [{ label: 'Go API-এর multi-stage Dockerfile', lang: 'dockerfile', text: 'FROM golang:1.22-alpine AS build\nWORKDIR /src\nCOPY go.mod go.sum ./\nRUN go mod download\nCOPY . .\nRUN CGO_ENABLED=0 go build -o /app ./cmd/api\n\nFROM gcr.io/distroless/static:nonroot   # ছোট, shell নেই, non-root\nCOPY --from=build /app /app\nUSER nonroot\nEXPOSE 3000\nENTRYPOINT ["/app"]' }],
+        code: [{ label: 'Node.js API-এর multi-stage Dockerfile', lang: 'dockerfile', text: 'FROM node:22-alpine AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci --omit=dev          # lockfile থেকে হুবহু একই version\nCOPY src ./src\n\nFROM gcr.io/distroless/nodejs22-debian12:nonroot   # ছোট, shell নেই, non-root\nWORKDIR /app\nCOPY --from=build /app /app\nEXPOSE 3000\nCMD ["src/server.js"]' }],
         points: ['Multi-stage: build tool final image-এ যায় না → ১০০০MB থেকে ১৫MB', 'Image immutable: v2 মানে সবসময় একই জিনিস', 'Config ও secret image-এর ভেতরে নয় — environment থেকে', 'Container VM নয় — একই kernel share করে, তাই হালকা ও দ্রুত'],
       },
       {
@@ -265,7 +265,7 @@ export default [
         modes: [
           { id: 'happy', name: '✅ Happy path', hops: [
             { path: ['dev', 'git', 'ci'], label: 'git push → PR', desc: 'Push হতেই CI শুরু: go vet, unit test, integration test।' },
-            { path: ['ci', 'scan'], label: 'tests ✓ → scan', desc: 'Dependency ও container image vulnerability scan (govulncheck, Trivy)।' },
+            { path: ['ci', 'scan'], label: 'tests ✓ → scan', desc: 'Dependency ও container image vulnerability scan (npm audit, Trivy)।' },
             { path: ['scan', 'reg'], label: 'build + push v2', desc: 'Image build হয়ে registry-তে — commit SHA দিয়ে tag।' },
             { path: ['reg', 'stg'], label: 'deploy staging', desc: 'Staging-এ deploy, smoke test, QA।' },
             { path: ['stg', 'prod'], label: 'approve → rolling deploy', status: 'ok', desc: 'Approve হলে production-এ rolling update — কোনো downtime নেই।' },
@@ -281,7 +281,7 @@ export default [
           ] },
         ],
       },
-      { type: 'terminal', preset: 'devops', title: 'Ship it! (Terminal)', intro: 'একটি Go API-কে Docker image বানাও, চালাও, registry-তে push করো, Kubernetes-এ deploy করো, আর Terraform plan দেখো।' },
+      { type: 'terminal', preset: 'devops', title: 'Ship it! (Terminal)', intro: 'একটি Node.js API-কে Docker image বানাও, চালাও, registry-তে push করো, Kubernetes-এ deploy করো, আর Terraform plan দেখো।' },
     ],
     quiz: [
       { q: 'Multi-stage Dockerfile-এর লাভ?', options: ['দ্রুত internet', 'ছোট ও নিরাপদ final image', 'বেশি RAM', 'GUI'], answer: 1, explain: 'Build tool final image-এ যায় না।' },
