@@ -3,6 +3,8 @@
 Interactive (2D + 3D + framer-motion) Software Engineering Masterclass — তিনটি learning track, একই শেখার ছন্দে:
 Concept → Visual Simulation → Real-world Example → Hands-on Practice → Cheatsheet → Assessment।
 
+🔗 **Live:** https://sabuj0338.github.io/academy/
+
 | Track | Phase | Lesson | Lab |
 |---|---|---|---|
 | 🌐 Computer Networking | ১২ | ১২ | ৩২ |
@@ -18,6 +20,8 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # dist/ — যেকোনো static host-এ deploy করা যায়
 ```
+
+`main`-এ push করলেই `.github/workflows/deploy.yml` build করে GitHub Pages-এ deploy করে।
 
 ## গঠন
 
