@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import HandbookPage from '../../views/HandbookPage.jsx';
+import { courses } from '../../data/curriculum.js';
+
+export function getStaticPaths() {
+  return courses.map((c) => ({ params: { id: c.id }, props: { title: c.bn + ' cheatsheet' } }));
+}
+const { id } = Astro.params;
+const { title } = Astro.props;
+---
+<Base title={title} active="handbook" courseId={id}>
+  <HandbookPage client:load initial={id} />
+</Base>

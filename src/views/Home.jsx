@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { tracks, lessons, lessonsOf, lessonById, trackOf, scenarios, upcoming, courseStats, toBn } from '../data/curriculum.js';
-import { isDone, pct, lastLesson } from '../lib/progress.js';
+import { isDone, pct, lastLesson, useProgress, useMounted } from '../lib/progress.js';
+import { href } from '../lib/nav.js';
 import CourseCard, { SoonCard } from '../components/CourseCard.jsx';
 
 const Hero3D = lazy(() => import('../components/Hero3D.jsx'));
@@ -39,10 +40,12 @@ export function SecHead({ kicker, title, children }) {
   );
 }
 
-export default function Home({ progress, go }) {
+export default function Home() {
+  const progress = useProgress();
+  const mounted = useMounted(); // 3D ও “যেখানে থেমেছিলে” শুধু browser-এ
   const totalLabs = lessons.reduce((s, l) => s + l.labs.length, 0);
   const hours = tracks.reduce((s, t) => s + courseStats(t.id).hours, 0);
-  const last = lastLesson() && lessonById(lastLesson());
+  const last = mounted && lastLesson() ? lessonById(lastLesson()) : null;
   const first = lessonsOf('net')[0];
   const LT = last && trackOf(last.track);
 
@@ -56,9 +59,9 @@ export default function Home({ progress, go }) {
           <p className="mb-6 max-w-[560px] text-[17px] text-muted md:text-[18.5px]">Internet কীভাবে চলে, বড় app কীভাবে বানানো হয়, আর hacker-দের কীভাবে ঠেকাতে হয় — 3D animation, interactive lab আর গল্পের মতো ব্যাখ্যায়। একদম শুরু থেকে, নিজের গতিতে।</p>
           <div className="flex flex-wrap gap-2.5">
             {last
-              ? <button className="btn primary lg" onClick={() => go('lesson/' + last.id)}>▶ চালিয়ে যাও: {last.title.slice(0, 26)}{last.title.length > 26 ? '…' : ''}</button>
-              : <button className="btn primary lg" onClick={() => go('lesson/' + first.id)}>▶ প্রথম lesson শুরু করো</button>}
-            <a className="btn lg" href="#/courses">সব কোর্স দেখো</a>
+              ? <a className="btn primary lg" href={href.lesson(last.id)}>▶ চালিয়ে যাও: {last.title.slice(0, 26)}{last.title.length > 26 ? '…' : ''}</a>
+              : <a className="btn primary lg" href={href.lesson(first.id)}>▶ প্রথম lesson শুরু করো</a>}
+            <a className="btn lg" href={href.courses()}>সব কোর্স দেখো</a>
           </div>
           <div className="mt-8 flex flex-wrap gap-5 md:gap-7">
             {[[tracks.length, 'কোর্স'], [lessons.length, 'lesson'], [totalLabs, 'interactive lab'], ['~' + hours, 'ঘণ্টা']].map(([n, t]) => (
@@ -67,7 +70,7 @@ export default function Home({ progress, go }) {
           </div>
         </div>
         <div className="hero-visual stage animate-rise relative h-[300px] overflow-hidden rounded-[22px] border border-line bg-[radial-gradient(circle_at_50%_45%,#15295a,#070b14_70%)] shadow-pop [animation-delay:.1s] md:h-[440px] md:rounded-[28px]">
-          <Suspense fallback={null}><Hero3D /></Suspense>
+          {mounted && <Suspense fallback={null}><Hero3D /></Suspense>}
           {[['📦 Packet', 'left-[8%] top-[12%]', '0s'], ['🔒 HTTPS', 'right-[9%] top-[18%]', '-1.5s'], ['🛡️ Firewall', 'bottom-[22%] left-[10%]', '-3s'], ['⚡ Cache', 'bottom-[14%] right-[12%]', '-2.2s']].map(([t, pos, d]) => (
             <span key={t} className={'animate-floaty pointer-events-none absolute z-[2] rounded-full border border-white/10 bg-[#101a2e]/75 px-3 py-1.5 text-[12px] font-semibold text-[#e6edf7] backdrop-blur md:text-[13.5px] ' + pos} style={{ animationDelay: d }}>{t}</span>
           ))}
@@ -77,7 +80,7 @@ export default function Home({ progress, go }) {
 
       <div className="mx-auto flex max-w-[1180px] flex-col gap-14 px-4 pb-20 sm:px-6 md:gap-[72px]">
         {last && (
-          <button className="lift animate-rise -mt-6 flex flex-wrap items-center gap-4 rounded-[20px] border border-line bg-panel p-4 text-left shadow-card md:px-5" style={{ '--c': LT.color }} onClick={() => go('lesson/' + last.id)}>
+          <button className="lift animate-rise -mt-6 flex flex-wrap items-center gap-4 rounded-[20px] border border-line bg-panel p-4 text-left shadow-card md:px-5" style={{ '--c': LT.color }} onClick={() => { window.location.href = href.lesson(last.id); }}>
             <span className="grid size-[54px] flex-none place-items-center rounded-2xl bg-c/15 text-[28px]">{last.icon}</span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] text-muted">যেখানে থেমেছিলে · {LT.bn}</span>
@@ -118,7 +121,7 @@ export default function Home({ progress, go }) {
               const d = ls.filter((l) => isDone(l, progress)).length;
               return (
                 <React.Fragment key={id}>
-                  <a href={'#/course/' + id} className="lift relative flex flex-1 flex-col gap-1 rounded-[20px] border border-line bg-panel p-5 text-[15px] shadow-card" style={{ '--c': t.color, '--g': t.grad }}>
+                  <a href={href.course(id)} className="lift relative flex flex-1 flex-col gap-1 rounded-[20px] border border-line bg-panel p-5 text-[15px] shadow-card" style={{ '--c': t.color, '--g': t.grad }}>
                     <span className="absolute right-4 top-3.5 text-[40px] font-extrabold leading-none text-c/25">{toBn(i + 1)}</span>
                     <span className="bg-tcgrad mb-1.5 grid size-[50px] place-items-center rounded-[15px] text-[26px]">{t.icon}</span>
                     <b className="text-[19px]">{t.bn}</b>
@@ -144,10 +147,10 @@ export default function Home({ progress, go }) {
                   const [id, label] = s[t];
                   const l = lessonById(id);
                   return (
-                    <button key={t} onClick={() => l && go('lesson/' + id)} style={{ '--c': trackOf(t).color }}
+                    <a key={t} href={href.lesson(id)} style={{ '--c': trackOf(t).color }}
                       className="flex items-center gap-2 rounded-[10px] border border-c/30 bg-c/8 px-2.5 py-1.5 text-left text-sm transition hover:translate-x-[3px] hover:bg-c/15">
                       <span>{trackOf(t).icon}</span>{label}{l && isDone(l, progress) && <span className="ml-auto text-ok">✓</span>}
-                    </button>
+                    </a>
                   );
                 })}
               </div>

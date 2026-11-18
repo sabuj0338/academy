@@ -12,7 +12,6 @@
 @import './motion.css' layer(components);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
-@source '../index.html';
 
 /* design token (styles.css) → Tailwind রং/font। Theme বা .stage বদলালে utility নিজে থেকেই বদলায়।
    ব্যবহার: bg-panel, bg-bg2, text-ink, text-muted, border-line, text-brand, bg-brand/10 … */

@@ -12,7 +12,7 @@ export function cheatMarkdown(l, total) {
   return s;
 }
 
-export default function CheatCard({ lesson, compact, total, onOpen }) {
+export default function CheatCard({ lesson, compact, total, link }) {
   const c = lesson.cheat;
   const sev = severityInfo[c.severity] || severityInfo.info;
   const T = trackOf(lesson.track);
@@ -24,7 +24,7 @@ export default function CheatCard({ lesson, compact, total, onOpen }) {
         <span className="cheat-no mono">{lesson.no} / {total || ''}</span>
       </div>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <h3 style={{ margin: '6px 0', cursor: onOpen ? 'pointer' : 'default' }} onClick={onOpen}>{lesson.icon} {lesson.title}</h3>
+        <h3 style={{ margin: '6px 0' }}>{link ? <a href={link} className="hover:underline">{lesson.icon} {lesson.title}</a> : <>{lesson.icon} {lesson.title}</>}</h3>
         <span className="badge" style={{ color: sev.color, borderColor: sev.color }}>{sev.label}</span>
       </div>
       <p style={{ margin: '0 0 12px' }}>{c.summary}</p>

@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import Home from '../views/Home.jsx';
+---
+<Base active="home">
+  <script is:inline>
+    // আগের version-এর পুরনো link (#/lesson/…, #/course/…) নতুন URL-এ পাঠাও
+    (function () {
+      var h = location.hash;
+      if (h.indexOf('#/') !== 0) return;
+      var p = h.slice(2).split('/'), base = location.pathname.replace(/\/?$/, '/'), to = null;
+      if (p[0] === 'lesson' && p[1]) to = 'learn/' + p[1] + '/' + (p[2] ? '#' + p[2] : '');
+      else if ((p[0] === 'course' || p[0] === 'track') && p[1]) to = 'courses/' + p[1] + '/';
+      else if (p[0] === 'courses') to = 'courses/';
+      else if (p[0] === 'handbook') to = 'handbook/' + (p[1] && p[1] !== 'all' ? p[1] + '/' : '');
+      if (to) location.replace(base + to);
+    })();
+  </script>
+  <Home client:load />
+</Base>

@@ -1,7 +1,8 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { trackOf, lessonById, unitsOf, unitOf, lessonsOf, toBn } from '../data/curriculum.js';
 import { labRegistry } from '../labs/index.js';
-import { isDone, statusOf, setLastLesson } from '../lib/progress.js';
+import { isDone, statusOf, setLastLesson, useProgress, updateLesson, bumpStep } from '../lib/progress.js';
+import { href } from '../lib/nav.js';
 import { Code } from './ui.jsx';
 import Quiz from './Quiz.jsx';
 import CheatCard from './CheatCard.jsx';
@@ -42,7 +43,7 @@ function Outline({ lesson, progress, open, onClose }) {
       {open && <div className="fixed inset-0 z-[70] bg-black/40 lg:hidden" onClick={onClose} />}
       <aside className={'fixed inset-y-0 left-0 z-[71] w-[300px] max-w-[85vw] overflow-y-auto border-r border-line bg-panel px-3 pb-10 pt-4 transition-transform duration-300 ' +
         'lg:sticky lg:top-[62px] lg:z-auto lg:h-[calc(100vh-62px)] lg:w-auto lg:max-w-none lg:translate-x-0 lg:bg-transparent ' + (open ? 'translate-x-0 shadow-pop' : '-translate-x-full')}>
-        <a href={'#/course/' + T.id} className="mb-3 flex items-center gap-3 rounded-xl p-1.5 hover:bg-bg2">
+        <a href={href.course(T.id)} className="mb-3 flex items-center gap-3 rounded-xl p-1.5 hover:bg-bg2">
           <span className="grid size-10 flex-none place-items-center rounded-xl text-xl" style={{ background: T.grad }}>{T.icon}</span>
           <span className="leading-snug"><b className="block">{T.bn}</b><small className="text-[12.5px] text-muted">{toBn(done)}/{toBn(ls.length)} lesson সম্পূর্ণ</small></span>
         </a>
@@ -55,7 +56,7 @@ function Outline({ lesson, progress, open, onClose }) {
               const s = statusOf(l, progress);
               const on = l.id === lesson.id;
               return (
-                <a key={l.id} ref={on ? cur : null} href={'#/lesson/' + l.id} onClick={onClose}
+                <a key={l.id} ref={on ? cur : null} href={href.lesson(l.id)} onClick={onClose}
                   className={'flex items-start gap-2.5 rounded-[10px] px-2 py-1.5 text-[14px] leading-snug ' + (on ? 'bg-tc/12 font-semibold text-ink' : 'text-muted hover:bg-bg2 hover:text-ink')}>
                   <span className={'mt-px grid size-[22px] flex-none place-items-center rounded-full text-[11.5px] font-bold ' +
                     (s === 'done' ? 'bg-ok text-white' : on ? 'bg-tc text-[#06101f]' : s === 'started' ? 'border-2 border-tc text-tc-ink' : 'border border-line2')}>
@@ -72,21 +73,32 @@ function Outline({ lesson, progress, open, onClose }) {
   );
 }
 
-// URL: #/lesson/<id>/<ধাপ নম্বর | recap | lab | quiz | cheat> — ধাপ share ও back-button এর জন্য
-const hashLesson = () => window.location.hash.split('/')[2];
+// URL: /learn/<id>/#<ধাপ নম্বর | recap | lab | quiz | cheat> — ধাপ share ও back-button এর জন্য
 function readHash(lesson) {
-  const seg = window.location.hash.split('/')[3];
+  const seg = window.location.hash.slice(1);
   if (['lab', 'quiz', 'cheat'].includes(seg)) return { tab: seg, step: 0 };
   if (seg === 'recap') return { tab: 'learn', step: lesson.steps.length };
   const n = parseInt(seg, 10);
   return { tab: 'learn', step: n >= 1 && n <= lesson.steps.length ? n - 1 : 0 };
 }
 
-export default function LessonView({ lesson, progress, update, next, prev, go, total }) {
-  const init = useRef(null);
-  if (!init.current || init.current.id !== lesson.id) init.current = { id: lesson.id, ...readHash(lesson) };
-  const [tab, setTabRaw] = useState(init.current.tab);
-  const [step, setStepRaw] = useState(init.current.step);
+export default function LessonView({ lessonId }) {
+  const lesson = lessonById(lessonId);
+  const progress = useProgress();
+  const lt = lessonsOf(lesson.track);
+  const li = lt.indexOf(lesson);
+  const prev = lt[li - 1];
+  const next = lt[li + 1];
+  const total = lt.length;
+  const [toast, setToast] = useState(null);
+  const update = (id, patch, msg) => {
+    updateLesson(id, patch);
+    if (msg) { setToast(msg); setTimeout(() => setToast(null), 2600); }
+  };
+  // build-এর HTML সবসময় ধাপ ১ দেখায়; browser-এ এসে URL-এর #hash পড়ে ঠিক ধাপে যায়
+  const [ready, setReady] = useState(false);
+  const [tab, setTabRaw] = useState('learn');
+  const [step, setStepRaw] = useState(0);
   const [dir, setDir] = useState(1);
   const [labIdx, setLabIdx] = useState(0);
   const [outline, setOutline] = useState(false);
@@ -109,18 +121,22 @@ export default function LessonView({ lesson, progress, update, next, prev, go, t
   const setStep = (s) => { setDir(s >= step ? 1 : -1); setStepRaw(Math.max(0, Math.min(N, s))); toTop(); };
   const setTab = (t) => { setTabRaw(t); toTop(); };
 
-  useEffect(() => { setTabRaw(init.current.tab); setStepRaw(init.current.step); setLabIdx(0); setOutline(false); setLastLesson(lesson.id); }, [lesson.id]);
   useEffect(() => {
-    const seen = Math.min(step, N - 1);
-    if (tab === 'learn' && (P.step ?? -1) < seen) update(lesson.id, { step: seen });
-  }, [step, tab]); // eslint-disable-line
+    const r = readHash(lesson);
+    setTabRaw(r.tab); setStepRaw(r.step); setReady(true);
+    setLastLesson(lesson.id);
+  }, [lesson.id]); // eslint-disable-line
   useEffect(() => {
+    if (ready && tab === 'learn') bumpStep(lesson.id, Math.min(step, N - 1));
+  }, [ready, step, tab]); // eslint-disable-line
+  useEffect(() => {
+    if (!ready) return;
     const seg = tab !== 'learn' ? tab : isRecap ? 'recap' : step ? String(step + 1) : '';
-    const h = '#/lesson/' + lesson.id + (seg ? '/' + seg : '');
-    if (hashLesson() === lesson.id && window.location.hash !== h) window.history.replaceState(null, '', h);
-  }, [tab, step, lesson.id]); // eslint-disable-line
+    const want = seg ? '#' + seg : '';
+    if (window.location.hash !== want) window.history.replaceState(null, '', want || window.location.pathname);
+  }, [ready, tab, step]); // eslint-disable-line
   useEffect(() => {
-    const f = () => { if (hashLesson() !== lesson.id) return; const r = readHash(lesson); setTabRaw(r.tab); setStepRaw(r.step); };
+    const f = () => { const r = readHash(lesson); setTabRaw(r.tab); setStepRaw(r.step); };
     window.addEventListener('hashchange', f);
     return () => window.removeEventListener('hashchange', f);
   }, [lesson]);
@@ -147,7 +163,7 @@ export default function LessonView({ lesson, progress, update, next, prev, go, t
     <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-line2 p-3">
       <span className="text-[13.5px] text-muted">🔗 অন্য কোর্সে এর সাথে সম্পর্কিত:</span>
       {related.map((r) => (
-        <a key={r.id} style={{ '--c': trackOf(r.track).color }} href={'#/lesson/' + r.id} className="rounded-[10px] border border-c/40 bg-c/10 px-2.5 py-1 text-[14px] hover:bg-c/20">{trackOf(r.track).icon} {r.title}</a>
+        <a key={r.id} style={{ '--c': trackOf(r.track).color }} href={href.lesson(r.id)} className="rounded-[10px] border border-c/40 bg-c/10 px-2.5 py-1 text-[14px] hover:bg-c/20">{trackOf(r.track).icon} {r.title}</a>
       ))}
     </div>
   );
@@ -161,7 +177,7 @@ export default function LessonView({ lesson, progress, update, next, prev, go, t
           <div className="animate-rise mb-5" key={lesson.id}>
             <div className="mb-3 flex flex-wrap items-center gap-2 text-[13.5px] text-muted">
               <button className="btn sm lg:hidden" onClick={() => setOutline(true)}>☰ Syllabus</button>
-              <a href={'#/course/' + T.id} className="font-semibold text-tc-ink hover:underline">{T.icon} {T.bn}</a><span>›</span><span>Unit {toBn(unitNo)}: {unit?.title}</span>
+              <a href={href.course(T.id)} className="font-semibold text-tc-ink hover:underline">{T.icon} {T.bn}</a><span>›</span><span>Unit {toBn(unitNo)}: {unit?.title}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="grid size-[60px] flex-none place-items-center rounded-[18px] border border-tc/35 bg-tc/10 text-[34px] md:size-[70px] md:text-[40px]">{lesson.icon}</div>
@@ -316,14 +332,15 @@ export default function LessonView({ lesson, progress, update, next, prev, go, t
             {Related}
             {isDone(lesson, progress) && <div className="animate-rise mt-4 rounded-2xl border border-ok/40 bg-ok/10 px-4 py-3 text-[16px]">🎉 <b>Lesson সম্পূর্ণ!</b> দারুণ কাজ — পরেরটায় চলো।</div>}
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {prev ? <a className="lift flex flex-col rounded-2xl border border-line bg-panel px-4 py-3" href={'#/lesson/' + prev.id}><small className="text-muted">← আগের lesson</small><b>{prev.icon} {prev.title}</b></a> : <span />}
-              {next ? <a className="lift flex flex-col rounded-2xl border border-tc/50 bg-tc/8 px-4 py-3 sm:text-right" href={'#/lesson/' + next.id}><small className="text-muted">পরের lesson →</small><b>{next.icon} {next.title}</b></a>
-                : <a className="lift flex flex-col rounded-2xl border border-tc/50 bg-tc/8 px-4 py-3 sm:text-right" href={'#/course/' + T.id}><small className="text-muted">কোর্সের শেষ lesson 🎓</small><b>কোর্সের পাতায় ফেরো</b></a>}
+              {prev ? <a className="lift flex flex-col rounded-2xl border border-line bg-panel px-4 py-3" href={href.lesson(prev.id)}><small className="text-muted">← আগের lesson</small><b>{prev.icon} {prev.title}</b></a> : <span />}
+              {next ? <a className="lift flex flex-col rounded-2xl border border-tc/50 bg-tc/8 px-4 py-3 sm:text-right" href={href.lesson(next.id)}><small className="text-muted">পরের lesson →</small><b>{next.icon} {next.title}</b></a>
+                : <a className="lift flex flex-col rounded-2xl border border-tc/50 bg-tc/8 px-4 py-3 sm:text-right" href={href.course(T.id)}><small className="text-muted">কোর্সের শেষ lesson 🎓</small><b>কোর্সের পাতায় ফেরো</b></a>}
             </div>
           </div>
         )}
         </div>
       </div>
+      {toast && <div className="toast pop-in">{toast}</div>}
     </div>
   );
 }

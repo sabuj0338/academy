@@ -199,7 +199,7 @@ export default [
       {
         title: 'Timeout — অনন্তকাল অপেক্ষা নয়',
         body: 'প্রতিটি network call-এ timeout দাও। Go-র default http.Client-এ timeout নেই! Timeout ছাড়া একটি ধীর dependency তোমার সব resource খেয়ে ফেলবে।',
-        code: [{ label: 'Go: timeout সহ', lang: 'go', text: 'client := &http.Client{Timeout: 2 * time.Second}\nctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)\ndefer cancel()\nreq, _ := http.NewRequestWithContext(ctx, "POST", payURL, body)' }],
+        code: [{ label: 'JavaScript: timeout সহ', lang: 'js', text: '// ১.৫ সেকেন্ডে উত্তর না এলে request বাতিল\nconst res = await fetch(payURL, {\n  method: \'POST\',\n  body,\n  signal: AbortSignal.timeout(1500),\n});' }],
         tip: 'Timeout ঠিক করো dependency-র p99 latency দেখে — একটু বেশি। আর মোট request-এর একটি deadline রাখো যা ভেতরের সব call-এ ছড়ায় (context propagation)।',
       },
       {

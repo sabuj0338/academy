@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { tracks, lessons, lessonsOf, trackOf, unitsOf, toBn } from '../data/curriculum.js';
 import CheatCard, { cheatMarkdown } from '../components/CheatCard.jsx';
 import { PageHead } from './CoursesPage.jsx';
+import { href } from '../lib/nav.js';
 
-export default function HandbookPage({ initial, go }) {
+export default function HandbookPage({ initial }) {
   const [q, setQ] = useState('');
   const [tr, setTr] = useState(tracks.some((t) => t.id === initial) ? initial : 'all');
   const [unit, setUnit] = useState(-1);
@@ -31,8 +32,8 @@ export default function HandbookPage({ initial, go }) {
       </PageHead>
       <div className="no-print mb-4 flex flex-wrap items-center gap-2.5">
         <div className="inline-flex flex-wrap gap-0.5 rounded-[13px] border border-line bg-bg2 p-1">
-          <button className={seg(tr === 'all')} onClick={() => setTr('all')}>সব</button>
-          {tracks.map((t) => <button key={t.id} className={seg(tr === t.id)} onClick={() => setTr(t.id)}>{t.icon} {t.bn}</button>)}
+          <button className={seg(tr === 'all')} onClick={() => { setTr('all'); history.replaceState(null, '', href.handbook()); }}>সব</button>
+          {tracks.map((t) => <button key={t.id} className={seg(tr === t.id)} onClick={() => { setTr(t.id); history.replaceState(null, '', href.handbook(t.id)); }}>{t.icon} {t.bn}</button>)}
         </div>
         <input className="input max-w-[260px]" placeholder="🔍 খোঁজো: dns, cache, jwt…" value={q} onChange={(e) => setQ(e.target.value)} />
         <span className="flex-1" />
@@ -47,7 +48,7 @@ export default function HandbookPage({ initial, go }) {
         </div>
       )}
       <div className="cheat-grid">
-        {list.map((l) => <CheatCard key={l.id} lesson={l} compact total={lessonsOf(l.track).length} onOpen={() => go('lesson/' + l.id)} />)}
+        {list.map((l) => <CheatCard key={l.id} lesson={l} compact total={lessonsOf(l.track).length} link={href.lesson(l.id)} />)}
       </div>
       {!list.length && <div className="text-muted">কিছু পাওয়া যায়নি।</div>}
     </div>

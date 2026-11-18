@@ -1,14 +1,52 @@
-// শেখার অগ্রগতি — সব browser-এর localStorage-এ (কোনো server নেই)
+// শেখার অগ্রগতি — সব browser-এর localStorage-এ (কোনো server, কোনো account নেই)।
+// একটি ছোট store: nav-এর XP আর page-এর progress আলাদা island হলেও একসাথে বদলায়।
+import { useEffect, useState, useSyncExternalStore } from 'react';
+
 export const KEY = 'seclab-progress-v1'; // পুরনো নাম রাখা হলো, যাতে আগের অগ্রগতি হারায় না
 const ACT = 'academy-activity';
 const LAST = 'academy-last-lesson';
+const EVT = 'academy-progress';
 
 const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
 
-export const loadProgress = () => read(KEY, {});
-export const saveProgress = (p) => write(KEY, p);
+// ───────── store
+const EMPTY = {};
+let cache = null;
+const snapshot = () => (cache ??= read(KEY, {}));
+const emit = () => window.dispatchEvent(new Event(EVT));
+const subscribe = (fn) => {
+  const onStorage = (e) => { if (!e.key || e.key === KEY || e.key === ACT) { cache = null; fn(); } };
+  window.addEventListener(EVT, fn);
+  window.addEventListener('storage', onStorage);
+  return () => { window.removeEventListener(EVT, fn); window.removeEventListener('storage', onStorage); };
+};
 
+/** Server-এ (build-এর সময়) খালি progress, browser-এ আসল — hydration mismatch হয় না */
+export const useProgress = () => useSyncExternalStore(subscribe, snapshot, () => EMPTY);
+
+export function updateLesson(id, patch) {
+  const p = snapshot();
+  cache = { ...p, [id]: { ...(p[id] || {}), ...patch } };
+  write(KEY, cache);
+  recordActivity();
+  emit();
+}
+
+export function resetAll() {
+  try { [KEY, ACT, LAST].forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ }
+  cache = null;
+  emit();
+}
+
+/** প্রথম render server-এর মতো, তারপর browser-এর মান — localStorage নির্ভর UI-র জন্য */
+export function useMounted() {
+  const [m, setM] = useState(false);
+  useEffect(() => setM(true), []);
+  return m;
+}
+
+// ───────── হিসাব
 const passMark = (l) => Math.ceil(l.quiz.length * 0.6);
 export const isDone = (l, p) => {
   const x = p[l.id];
@@ -43,4 +81,8 @@ export const streakOf = () => {
 
 export const setLastLesson = (id) => write(LAST, id);
 export const lastLesson = () => read(LAST, null);
-export const resetAll = () => { try { [KEY, ACT, LAST].forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } };
+
+/** পড়া ধাপ শুধু বাড়ে, কখনো কমে না (সরাসরি store থেকে পড়ে — hydration-এর খালি snapshot-এ ভুল হয় না) */
+export function bumpStep(id, seen) {
+  if ((snapshot()[id]?.step ?? -1) < seen) updateLesson(id, { step: seen });
+}

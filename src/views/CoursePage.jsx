@@ -1,11 +1,14 @@
 import React from 'react';
-import { tracks, lessonsOf, unitsOf, courseStats, toBn } from '../data/curriculum.js';
-import { isDone, pct, statusOf } from '../lib/progress.js';
+import { tracks, trackOf, lessonsOf, unitsOf, courseStats, toBn } from '../data/curriculum.js';
+import { isDone, pct, statusOf, useProgress } from '../lib/progress.js';
+import { href } from '../lib/nav.js';
 import { LevelTag } from '../components/CourseCard.jsx';
 
 const card = 'rounded-[18px] border border-line bg-panel px-[18px] py-4';
 
-export default function CoursePage({ course: c, progress, go }) {
+export default function CoursePage({ courseId }) {
+  const c = trackOf(courseId);
+  const progress = useProgress();
   const ls = lessonsOf(c.id);
   const st = courseStats(c.id);
   const done = ls.filter((l) => isDone(l, progress)).length;
@@ -23,7 +26,7 @@ export default function CoursePage({ course: c, progress, go }) {
         <span className="grid-bg absolute inset-0" />
         <div className="relative mx-auto flex max-w-[1180px] items-center gap-8 px-4 pb-10 pt-8 sm:px-6">
           <div className="animate-rise min-w-0 flex-1">
-            <a href="#/courses" className="text-sm font-semibold text-white/85 hover:text-white">← সব কোর্স</a>
+            <a href={href.courses()} className="text-sm font-semibold text-white/85 hover:text-white">← সব কোর্স</a>
             <div className="mb-2 mt-3 flex items-center gap-4">
               <span className="grid size-[60px] flex-none place-items-center rounded-[20px] border border-white/30 bg-white/20 text-[32px] md:size-[76px] md:text-[42px]">{c.icon}</span>
               <div><h1 className="text-[30px] font-bold leading-tight md:text-[40px]">{c.bn}</h1><div className="text-[15px] opacity-85">{c.title}</div></div>
@@ -36,10 +39,10 @@ export default function CoursePage({ course: c, progress, go }) {
               <span>⏱ ~{toBn(st.hours)} ঘণ্টা</span>
             </div>
             <div className="mt-5 flex flex-wrap gap-2.5">
-              <button className="btn lg border-transparent! bg-white! font-bold text-[#111827]! shadow-[0_10px_24px_rgba(0,0,0,.18)]" onClick={() => go('lesson/' + next.id)}>
+              <button className="btn lg border-transparent! bg-white! font-bold text-[#111827]! shadow-[0_10px_24px_rgba(0,0,0,.18)]" onClick={() => { window.location.href = href.lesson(next.id); }}>
                 {started ? '▶ চালিয়ে যাও' : '▶ কোর্স শুরু করো'}: {next.title.slice(0, 26)}{next.title.length > 26 ? '…' : ''}
               </button>
-              <a className="btn lg border-white/35! bg-white/15! text-white! hover:bg-white/25!" href={'#/handbook/' + c.id}>📌 Cheatsheet</a>
+              <a className="btn lg border-white/35! bg-white/15! text-white! hover:bg-white/25!" href={href.handbook(c.id)}>📌 Cheatsheet</a>
             </div>
           </div>
           <div className="animate-rise hidden flex-none md:block [animation-delay:.1s]">
@@ -84,7 +87,7 @@ export default function CoursePage({ course: c, progress, go }) {
                             (s === 'done' ? 'border-ok bg-ok text-white' : s === 'started' ? 'lp-started border-transparent text-ink' : isNext ? 'animate-glow border-tc bg-panel text-tc-ink' : 'border-line2 bg-panel text-muted')}>
                           {s === 'done' ? '✓' : toBn(n)}
                         </span>
-                        <a href={'#/lesson/' + l.id}
+                        <a href={href.lesson(l.id)}
                           className={'lift flex min-w-0 flex-1 items-start gap-3.5 rounded-2xl border bg-panel px-4 py-3.5 ' + (isNext ? 'border-tc/55 ring-[3px] ring-tc/12' : 'border-line')}>
                           <span className="flex-none text-[28px] leading-tight">{l.icon}</span>
                           <span className="flex min-w-0 flex-col">
@@ -133,7 +136,7 @@ export default function CoursePage({ course: c, progress, go }) {
           <div className={card}>
             <h3 className="mb-2 text-[17px] font-bold">➡️ অন্য কোর্স</h3>
             {others.map((t) => (
-              <a key={t.id} href={'#/course/' + t.id} className="-mx-2 flex items-center gap-3 rounded-xl p-2 hover:bg-bg2">
+              <a key={t.id} href={href.course(t.id)} className="-mx-2 flex items-center gap-3 rounded-xl p-2 hover:bg-bg2">
                 <span className="grid size-[38px] flex-none place-items-center rounded-[11px] text-[19px]" style={{ background: t.grad }}>{t.icon}</span>
                 <span className="leading-snug"><b className="block text-[15px]">{t.bn}</b><small className="text-[13px] text-muted">{t.q}</small></span>
               </a>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { lessonsOf, courseStats, LEVELS, toBn } from '../data/curriculum.js';
 import { isDone, pct } from '../lib/progress.js';
+import { href } from '../lib/nav.js';
 
 export function LevelTag({ level, text }) {
   const L = LEVELS[level] || LEVELS.beginner;
@@ -31,7 +32,7 @@ export default function CourseCard({ course: c, progress, index }) {
   const done = ls.filter((l) => isDone(l, progress)).length;
   const started = ls.some((l) => pct(l, progress) > 0);
   return (
-    <a href={'#/course/' + c.id} className="lift group animate-rise flex flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-card hover:border-[color-mix(in_srgb,var(--c)_45%,var(--line))]"
+    <a href={href.course(c.id)} className="lift group animate-rise flex flex-col overflow-hidden rounded-[22px] border border-line bg-panel shadow-card hover:border-[color-mix(in_srgb,var(--c)_45%,var(--line))]"
       style={{ '--c': c.color, '--g': c.grad, animationDelay: (index || 0) * 0.07 + 's' }}>
       <div className="bg-tcgrad relative grid h-32 place-items-center overflow-hidden">
         <span className="animate-drift absolute -right-10 -top-16 size-40 rounded-full bg-white/20" />

@@ -129,7 +129,7 @@ export default [
         title: 'কী log করবে',
         body: 'Security event: login সফল/ব্যর্থ, password reset, role change, 401/403 spike, admin action, rate-limit hit। প্রতিটি log-এ: timestamp (UTC), user ID, IP, request ID, action, ফলাফল।',
         warn: 'Log-এ কখনো: password, token, session cookie, পূর্ণ card number, OTP।',
-        code: [{ label: 'Go · structured log (slog)', lang: 'go', kind: 'good', text: 'slog.Info("login_failed",\n    "email_hash", sha256hex(email),\n    "ip", c.IP(),\n    "ua", c.Get("User-Agent"),\n    "req_id", c.Locals("requestid"))' }],
+        code: [{ label: 'Node.js · structured log (pino)', lang: 'js', kind: 'good', text: 'import pino from \'pino\';\nconst log = pino();\n\nlog.info({\n  event: \'login_failed\',\n  email_hash: sha256hex(email),   // আসল email নয়\n  ip: req.ip,\n  ua: req.get(\'User-Agent\'),\n  req_id: req.id,\n}, \'login failed\');' }],
       },
       {
         title: 'Pattern চেনো',

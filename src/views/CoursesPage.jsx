@@ -1,6 +1,7 @@
 import React from 'react';
 import { tracks, upcoming } from '../data/curriculum.js';
 import CourseCard, { SoonCard } from '../components/CourseCard.jsx';
+import { useProgress } from '../lib/progress.js';
 
 export function PageHead({ kicker, title, children }) {
   return (
@@ -12,7 +13,8 @@ export function PageHead({ kicker, title, children }) {
   );
 }
 
-export default function CoursesPage({ progress }) {
+export default function CoursesPage() {
+  const progress = useProgress();
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-20 pt-6 sm:px-6">
       <PageHead kicker="কোর্সসমূহ" title="কী শিখতে চাও?">

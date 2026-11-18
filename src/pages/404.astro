@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/nav.js';
+---
+<Base title="পাতা পাওয়া যায়নি">
+  <section class="mx-auto flex max-w-[640px] flex-col items-center px-4 py-24 text-center">
+    <div class="text-[72px] leading-none">🛰️</div>
+    <h1 class="mt-4 text-[34px] font-bold">৪০৪ — packet হারিয়ে গেছে!</h1>
+    <p class="mt-2 text-[17px] text-muted">এই ঠিকানায় কোনো পাতা নেই। হয়তো link-টা পুরনো, অথবা টাইপে ভুল হয়েছে।</p>
+    <div class="mt-6 flex flex-wrap justify-center gap-2.5">
+      <a class="btn primary lg" href={url('')}>🏠 প্রথম পাতায় ফেরো</a>
+      <a class="btn lg" href={url('courses/')}>📚 সব কোর্স</a>
+    </div>
+  </section>
+</Base>

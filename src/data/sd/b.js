@@ -120,7 +120,7 @@ export default [
       },
       {
         title: 'Cache-aside (lazy loading) — সবচেয়ে প্রচলিত',
-        code: [{ label: 'Go pseudo-code', lang: 'go', text: 'func GetProduct(id int) Product {\n  if v, ok := redis.Get("product:" + id); ok {\n    return v                       // HIT ⚡\n  }\n  p := db.QueryProduct(id)         // MISS → DB\n  redis.Set("product:"+id, p, 10*time.Minute)  // TTL সহ রেখে দাও\n  return p\n}' }],
+        code: [{ label: 'JavaScript (pseudo-code)', lang: 'js', text: 'async function getProduct(id) {\n  const cached = await redis.get(`product:${id}`);\n  if (cached) return JSON.parse(cached);                  // HIT ⚡\n\n  const p = await db.query(\'SELECT * FROM products WHERE id = $1\', [id]);  // MISS → DB\n  await redis.set(`product:${id}`, JSON.stringify(p), { EX: 600 });   // ১০ মিনিটের TTL সহ রেখে দাও\n  return p;\n}' }],
         body: 'App আগে cache দেখে; না পেলে DB থেকে এনে cache-এ রাখে। শুধু যা আসলে চাওয়া হয় তাই cache হয়।',
       },
       {

@@ -33,7 +33,7 @@ export default [
         title: 'সমাধান — Defense in Depth',
         body: 'মূল নিয়ম: context অনুযায়ী output encode করো। তারপর অতিরিক্ত স্তর যোগ করো:',
         points: ['Output encoding: < → &lt;, > → &gt;', 'Rich HTML দরকার হলে DOMPurify দিয়ে sanitize', 'URL-এ শুধু http/https scheme allow', 'Content-Security-Policy: script-src \'self\' — inline script বন্ধ', 'HttpOnly cookie — JS cookie পড়তে পারবে না', 'Token localStorage-এ নয়'],
-        code: [{ label: 'Go Fiber · CSP header', lang: 'go', kind: 'good', text: 'app.Use(func(c *fiber.Ctx) error {\n    c.Set("Content-Security-Policy",\n        "default-src \'self\'; script-src \'self\'; object-src \'none\'; base-uri \'self\'")\n    return c.Next()\n})' }],
+        code: [{ label: 'Express · CSP header', lang: 'js', kind: 'good', text: 'app.use((req, res, next) => {\n  res.setHeader(\'Content-Security-Policy\',\n    "default-src \'self\'; script-src \'self\'; object-src \'none\'; base-uri \'self\'");\n  next();\n});\n// সহজ উপায়: app.use(helmet()) — CSP সহ অনেক security header একসাথে' }],
       },
     ],
     labs: [{ type: 'xss', title: 'Guestbook XSS Lab', intro: 'একটি সিমুলেটেড guestbook। Payload লিখে দেখো vulnerable mode-এ কী ঘটে (script আসলে চলে না — নিরাপদ sandbox simulation)। তারপর এক এক করে defense চালু করো।' }],
@@ -76,7 +76,7 @@ export default [
         title: 'সমাধান',
         body: 'একাধিক স্তর:',
         points: ['SameSite=Lax বা Strict cookie — cross-site POST-এ cookie যায় না (আধুনিক browser-এ Lax ডিফল্ট)', 'CSRF token — প্রতিটি form-এ গোপন র‍্যান্ডম token, server যাচাই করে', 'Origin / Referer header যাচাই', 'State change কখনো GET দিয়ে নয়', 'গুরুত্বপূর্ণ কাজে re-authentication'],
-        code: [{ label: 'Go Fiber · CSRF middleware', lang: 'go', kind: 'good', text: 'import "github.com/gofiber/fiber/v2/middleware/csrf"\n\napp.Use(csrf.New(csrf.Config{\n    CookieName:     "__Host-csrf",\n    CookieSecure:   true,\n    CookieSameSite: "Strict",\n    KeyLookup:      "header:X-CSRF-Token",\n}))' }],
+        code: [{ label: 'Express · CSRF token যাচাই', lang: 'js', kind: 'good', text: '// login-এর সময় একটি random token বানাও, session-এ রাখো, page-এ পাঠাও\nreq.session.csrf = crypto.randomBytes(32).toString(\'hex\');\n\n// কিছু বদলায় এমন প্রতিটি request-এ token মিলিয়ে দেখো\napp.use((req, res, next) => {\n  if ([\'GET\', \'HEAD\', \'OPTIONS\'].includes(req.method)) return next();\n  if (req.get(\'X-CSRF-Token\') !== req.session.csrf) return res.sendStatus(403);\n  next();\n});' }],
         tip: 'শুধু Authorization: Bearer header দিয়ে auth করলে (cookie নয়), browser নিজে থেকে token পাঠায় না — তাই classic CSRF প্রযোজ্য নয়। কিন্তু তখন XSS-এর ঝুঁকি বাড়ে।',
       },
     ],
@@ -145,7 +145,7 @@ export default [
         title: 'কীভাবে ঘটে',
         body: 'Normal login: email = sabuj@x.com। Backend query বানায় string জোড়া দিয়ে। এখন attacker email-এ লিখল: \' OR \'1\'=\'1\' -- । Query-র শর্ত সবসময় সত্য হয়ে গেল এবং -- বাকি অংশ (password check) comment করে দিল।',
         code: [
-          { label: 'দুর্বল · Go', lang: 'go', kind: 'bad', text: 'q := "SELECT id, role FROM users WHERE email = \'" + email +\n     "\' AND password_hash = \'" + hash + "\'"\nrow := db.QueryRow(q)' },
+          { label: 'দুর্বল · JavaScript', lang: 'js', kind: 'bad', text: 'const q = "SELECT id, role FROM users WHERE email = \'" + email +\n          "\' AND password_hash = \'" + hash + "\'";\nconst { rows } = await db.query(q);' },
           { label: 'Attack-এর পরে আসল query', lang: 'sql', kind: 'bad', text: "SELECT id, role FROM users\nWHERE email = '' OR '1'='1' -- ' AND password_hash = '...'" },
         ],
       },
@@ -159,8 +159,8 @@ export default [
         title: 'সমাধান',
         body: 'Parameterized query-তে SQL গঠন আগে থেকে ঠিক থাকে, input শুধু data হিসেবে বসে — কখনো code হয় না।',
         code: [
-          { label: 'নিরাপদ · Go (database/sql / pgx)', lang: 'go', kind: 'good', text: 'row := db.QueryRow(\n    "SELECT id, role, password_hash FROM users WHERE email = $1",\n    email,\n)\n// তারপর bcrypt.CompareHashAndPassword(hash, password)' },
-          { label: 'ORDER BY allowlist', lang: 'go', kind: 'good', text: 'allowed := map[string]string{"price": "price", "date": "created_at"}\ncol, ok := allowed[c.Query("sort")]\nif !ok { col = "created_at" }' },
+          { label: 'নিরাপদ · JavaScript (node-postgres)', lang: 'js', kind: 'good', text: 'const { rows } = await db.query(\n  \'SELECT id, role, password_hash FROM users WHERE email = $1\',\n  [email],\n);\n// তারপর: await bcrypt.compare(password, rows[0].password_hash)' },
+          { label: 'ORDER BY allowlist', lang: 'js', kind: 'good', text: 'const allowed = { price: \'price\', date: \'created_at\' };\nconst col = allowed[req.query.sort] ?? \'created_at\';' },
         ],
         points: ['সব জায়গায় parameterized query / ORM (GORM, sqlc)', 'Input validation (email format, int ID)', 'App DB user-এর least privilege — DROP/superuser নয়', 'Database error client-কে দেখাবে না'],
       },
@@ -205,8 +205,8 @@ export default [
         title: 'সমাধান',
         body: 'প্রতিটি object access-এ server যাচাই করবে: এই user কি এই object-এর মালিক বা অনুমতিপ্রাপ্ত?',
         code: [
-          { label: 'দুর্বল', lang: 'go', kind: 'bad', text: 'db.QueryRow("SELECT * FROM invoices WHERE id=$1", c.Params("id"))' },
-          { label: 'নিরাপদ', lang: 'go', kind: 'good', text: 'uid := c.Locals("userID")\nerr := db.QueryRow(\n  "SELECT * FROM invoices WHERE id=$1 AND user_id=$2",\n  c.Params("id"), uid).Scan(&inv)\nif err == sql.ErrNoRows { return c.SendStatus(404) }' },
+          { label: 'দুর্বল', lang: 'js', kind: 'bad', text: 'await db.query(\'SELECT * FROM invoices WHERE id = $1\', [req.params.id]);' },
+          { label: 'নিরাপদ', lang: 'js', kind: 'good', text: 'const { rows } = await db.query(\n  \'SELECT * FROM invoices WHERE id = $1 AND user_id = $2\',\n  [req.params.id, req.user.id],\n);\nif (rows.length === 0) return res.sendStatus(404);' },
         ],
         points: ['প্রতিটি query-তে owner শর্ত', 'UUID ব্যবহার enumeration কঠিন করে — কিন্তু authorization-এর বিকল্প নয়', '/api/me/invoices pattern — ID client থেকে নেওয়াই লাগে না', 'Automated test: user A-এর token দিয়ে user B-এর resource'],
       },
@@ -274,7 +274,7 @@ export default [
       {
         title: 'সমাধান',
         body: 'Allowlist + resolved IP যাচাই + network isolation:',
-        code: [{ label: 'Go · নিরাপদ fetch', lang: 'go', kind: 'good', text: 'u, err := url.Parse(raw)\nif err != nil || u.Scheme != "https" { return errBad }\nif !allowedHosts[u.Hostname()] { return errBad }\nips, _ := net.LookupIP(u.Hostname())\nfor _, ip := range ips {\n    if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {\n        return errBad\n    }\n}\nclient := &http.Client{\n    Timeout: 5 * time.Second,\n    CheckRedirect: func(*http.Request, []*http.Request) error {\n        return http.ErrUseLastResponse // redirect follow করো না\n    },\n}' }],
+        code: [{ label: 'Node.js · নিরাপদ fetch', lang: 'js', kind: 'good', text: 'import dns from \'node:dns/promises\';\nimport ipaddr from \'ipaddr.js\';\n\nconst u = new URL(raw);                          // ভুল URL হলে এখানেই error\nif (u.protocol !== \'https:\') throw badRequest();\nif (!allowedHosts.has(u.hostname)) throw badRequest();\n\nconst addrs = await dns.lookup(u.hostname, { all: true });\nfor (const { address } of addrs) {\n  // private, loopback, link-local — সব ভেতরের ঠিকানা বাদ\n  if (ipaddr.parse(address).range() !== \'unicast\') throw badRequest();\n}\n\nconst res = await fetch(u, {\n  redirect: \'manual\',                            // redirect follow করো না\n  signal: AbortSignal.timeout(5000),\n});' }],
         points: ['Host allowlist', 'শুধু https scheme', 'Resolve করা IP private/loopback/link-local হলে বাতিল', 'Redirect follow বন্ধ', 'AWS IMDSv2 চালু (token লাগে)', 'Fetcher service আলাদা network-এ'],
       },
     ],
@@ -335,7 +335,7 @@ export default [
       {
         title: 'সমাধান',
         body: '',
-        code: [{ label: 'Go Fiber · নিরাপদ upload', lang: 'go', kind: 'good', text: 'app := fiber.New(fiber.Config{BodyLimit: 5 * 1024 * 1024})\n\nfh, _ := c.FormFile("avatar")\nf, _ := fh.Open(); defer f.Close()\nhead := make([]byte, 512); f.Read(head)\nmime := http.DetectContentType(head)\nif mime != "image/png" && mime != "image/jpeg" {\n    return c.SendStatus(415)\n}\nname := uuid.NewString() + ".png"      // user filename ব্যবহার নয়\n// re-encode করো (metadata/payload সরে যায়) → S3/R2-তে রাখো' }],
+        code: [{ label: 'Express + multer · নিরাপদ upload', lang: 'js', kind: 'good', text: 'import multer from \'multer\';\nimport { fileTypeFromBuffer } from \'file-type\';\n\nconst upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });\n\napp.post(\'/api/avatar\', requireLogin, upload.single(\'avatar\'), async (req, res) => {\n  const type = await fileTypeFromBuffer(req.file.buffer);   // নাম নয়, আসল byte দেখে ধরন বোঝো\n  if (![\'image/png\', \'image/jpeg\'].includes(type?.mime)) return res.sendStatus(415);\n\n  const name = crypto.randomUUID() + \'.\' + type.ext;        // user-এর দেওয়া নাম ব্যবহার নয়\n  // re-encode করো (metadata/payload সরে যায়) → S3/R2-তে রাখো\n});' }],
         points: ['Allowlist extension + magic bytes', 'নতুন random filename', 'Web root-এর বাইরে বা object storage (S3/R2)', 'আলাদা domain থেকে serve (usercontent.example)', 'Content-Disposition: attachment, X-Content-Type-Options: nosniff', 'Image re-encode', 'Size limit + malware scan'],
       },
     ],
@@ -367,7 +367,7 @@ export default [
       {
         title: 'আক্রমণটা বোঝো',
         body: 'Endpoint: GET /api/download?file=invoice.pdf — server পড়ে /app/uploads/invoice.pdf। Attacker পাঠাল file=../../etc/passwd → server পড়ল /app/uploads/../../etc/passwd = /etc/passwd! একইভাবে .env, SSH key, source code সব পড়া সম্ভব।',
-        code: [{ label: 'দুর্বল · Go', lang: 'go', kind: 'bad', text: 'path := "/app/uploads/" + c.Query("file")\nreturn c.SendFile(path)' }],
+        code: [{ label: 'দুর্বল · Express', lang: 'js', kind: 'bad', text: 'app.get(\'/download\', (req, res) => {\n  res.sendFile(\'/app/uploads/\' + req.query.file);\n});' }],
       },
       {
         title: 'Bypass কৌশল',
@@ -377,7 +377,7 @@ export default [
       {
         title: 'সমাধান',
         body: 'Path normalize করো, তারপর যাচাই করো ফলাফল এখনো base directory-র ভেতরে আছে কিনা। আরও ভালো: user থেকে filename নিও না — ID নাও, DB থেকে path বের করো।',
-        code: [{ label: 'নিরাপদ · Go', lang: 'go', kind: 'good', text: 'base := "/app/uploads"\nname := filepath.Base(c.Query("file"))      // শুধু ফাইলের নাম\nfull := filepath.Join(base, name)\nif !strings.HasPrefix(filepath.Clean(full), base+string(os.PathSeparator)) {\n    return c.SendStatus(400)\n}\nreturn c.SendFile(full)\n\n// Go 1.24+: os.OpenRoot(base) → root.Open(name) — base-এর বাইরে যেতে পারে না' }],
+        code: [{ label: 'নিরাপদ · Node.js', lang: 'js', kind: 'good', text: 'import path from \'node:path\';\n\nconst base = \'/app/uploads\';\nconst name = path.basename(String(req.query.file));   // শুধু ফাইলের নাম\nconst full = path.resolve(base, name);\nif (!full.startsWith(base + path.sep)) return res.sendStatus(400);\nres.sendFile(full);\n\n// Express-এর সহজ উপায়: res.sendFile(name, { root: base }) — root-এর বাইরে যেতে দেয় না' }],
         tip: 'Nginx: "location /files { alias /data/files/; }" — location-এ trailing slash না থাকলে /files../ দিয়ে parent folder পড়া যায় (alias traversal)।',
       },
     ],
@@ -475,7 +475,7 @@ export default [
       {
         title: 'সমাধান',
         body: '',
-        code: [{ label: 'নিরাপদ · Go', lang: 'go', kind: 'good', text: 'next := c.Query("next")\nu, err := url.Parse(next)\nif err != nil || u.IsAbs() || u.Host != "" ||\n   !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") ||\n   strings.Contains(next, "\\\\") {\n    next = "/dashboard"\n}\nreturn c.Redirect(next)' }],
+        code: [{ label: 'নিরাপদ · Express', lang: 'js', kind: 'good', text: 'let next = String(req.query.next || \'\');\nconst safe = next.startsWith(\'/\') && !next.startsWith(\'//\') && !next.includes(\'\\\\\');\nif (!safe) next = \'/dashboard\';\nres.redirect(next);' }],
         points: ['শুধু relative path (/ দিয়ে শুরু, // নয়)', 'অথবা named destination: ?next=orders → map থেকে path', 'External হলে allowlist + "আপনি বাইরে যাচ্ছেন" page'],
       },
     ],
@@ -535,7 +535,7 @@ export default [
       {
         title: 'Rate Limiting (Go Fiber)',
         body: 'IP এবং account উভয় ভিত্তিতে limit দাও। Redis দিয়ে store করো যাতে একাধিক instance-এ কাজ করে।',
-        code: [{ label: 'Go Fiber limiter', lang: 'go', kind: 'good', text: 'import "github.com/gofiber/fiber/v2/middleware/limiter"\n\napp.Post("/api/login", limiter.New(limiter.Config{\n    Max:        5,\n    Expiration: 1 * time.Minute,\n    KeyGenerator: func(c *fiber.Ctx) string {\n        return c.IP() + ":" + strings.ToLower(c.FormValue("email"))\n    },\n    Storage: redisStorage,\n}), loginHandler)' }],
+        code: [{ label: 'Express · express-rate-limit', lang: 'js', kind: 'good', text: 'import rateLimit from \'express-rate-limit\';\n\nconst loginLimiter = rateLimit({\n  windowMs: 60 * 1000,   // ১ মিনিট\n  limit: 5,              // প্রতি IP + email-এ ৫ বার\n  keyGenerator: (req) => req.ip + \':\' + String(req.body.email).toLowerCase(),\n  standardHeaders: true, // RateLimit-* header পাঠাও\n});\n\napp.post(\'/api/login\', loginLimiter, loginHandler);' }],
         warn: 'Cloudflare-এর পেছনে থাকলে c.IP() Cloudflare-এর IP দেবে! Fiber Config-এ ProxyHeader: "CF-Connecting-IP" এবং TrustedProxies সেট করো।',
       },
       {
