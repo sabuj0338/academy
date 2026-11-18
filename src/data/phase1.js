@@ -1,10 +1,10 @@
 // Phase 01 — Security Fundamentals
 const STACK_NODES = [
-  { id: 'client', label: 'Browser', icon: '🧑‍💻', sub: 'Next.js / Flutter' },
+  { id: 'client', label: 'Browser', icon: '🧑‍💻', sub: 'React / mobile app' },
   { id: 'dns', label: 'DNS', icon: '📖', sub: 'domain → IP' },
   { id: 'cf', label: 'Cloudflare', icon: '☁️', sub: 'WAF · TLS' },
   { id: 'nginx', label: 'Nginx', icon: '🔀', sub: 'Reverse Proxy' },
-  { id: 'api', label: 'Go Fiber', icon: '⚙️', sub: 'Backend API' },
+  { id: 'api', label: 'Node.js (Express)', icon: '⚙️', sub: 'Backend API' },
   { id: 'db', label: 'PostgreSQL', icon: '🗄️', sub: '+ Redis' },
 ];
 
@@ -42,13 +42,13 @@ export default [
       },
       {
         title: 'Backend-এ পৌঁছানোর আগে কী ঘটে?',
-        body: 'তুমি নিজে deploy করো বলে এটা খুব গুরুত্বপূর্ণ। api.example.com-এ request যাওয়ার পথ: DNS lookup → TCP connection → TLS handshake (HTTPS) → Cloudflare (proxy, WAF, rate limit) → Nginx (reverse proxy) → Go Fiber (business logic) → PostgreSQL / Redis।',
+        body: 'নিজের app বানাতে বা চালাতে চাইলে এটা খুব গুরুত্বপূর্ণ। api.example.com-এ request যাওয়ার পথ: DNS lookup → TCP connection → TLS handshake (HTTPS) → Cloudflare (proxy, WAF, rate limit) → Nginx (reverse proxy) → Node.js app (business logic) → PostgreSQL / Redis।',
         warn: 'HTTPS ≠ Secure Application। HTTPS শুধু পথে data encrypt করে। একটি সম্পূর্ণ valid HTTPS request-এর ভেতরেও SQL Injection payload থাকতে পারে।',
       },
       {
         title: 'Attacker কোথায় হস্তক্ষেপ করতে পারে?',
         body: 'প্রতিটি স্তর একটি Attack Surface। আর সবচেয়ে গুরুত্বপূর্ণ নীতি: শুধু তোমার frontend থেকে এসেছে বলে কোনো data বিশ্বাস করবে না। Attacker তোমার UI ব্যবহার করতে বাধ্য নয় — সে DevTools-এ JS বদলাতে পারে, curl দিয়ে request পাঠাতে পারে, Burp Suite দিয়ে request intercept করে বদলাতে পারে, নিজের script লিখতে পারে।',
-        points: ['Client: XSS, stolen token, insecure storage', 'DNS/Network: DNS hijack, MITM', 'Cloudflare: origin IP leak, misconfigured WAF', 'Nginx: misconfig, info leak, path traversal', 'Go Fiber: injection, broken auth, IDOR', 'Database: exposed port, excessive privilege'],
+        points: ['Client: XSS, stolen token, insecure storage', 'DNS/Network: DNS hijack, MITM', 'Cloudflare: origin IP leak, misconfigured WAF', 'Nginx: misconfig, info leak, path traversal', 'Backend app: injection, broken auth, IDOR', 'Database: exposed port, excessive privilege'],
         code: [{ label: 'Attacker-এর পক্ষে UI ছাড়াই request', lang: 'bash', text: "curl -X DELETE https://api.example.com/api/orders/1042 \\\n  -H 'Authorization: Bearer <attacker-token>'" }],
       },
       {
@@ -73,10 +73,10 @@ export default [
               { from: 'client', to: 'cf', label: 'TLS Hello 🔒', desc: 'TLS handshake: Cloudflare certificate দেখায়, Browser যাচাই করে, তারপর একটি encrypted channel তৈরি হয়। এখন থেকে পথের কেউ data পড়তে পারবে না।' },
               { from: 'client', to: 'cf', label: 'POST /api/login', desc: 'Encrypted HTTP request Cloudflare-এ পৌঁছায়। Cloudflare WAF rules ও rate limit চেক করে।' },
               { from: 'cf', to: 'nginx', label: 'forward', desc: 'Cloudflare request-টি তোমার origin server-এর Nginx-এ পাঠায় (SSL mode "Full (strict)" হলে এই অংশও encrypted)।' },
-              { from: 'nginx', to: 'api', label: 'proxy_pass :3000', desc: 'Nginx reverse proxy request-টি localhost:3000-এ চলা Go Fiber app-এ পাঠায়। Fiber JSON body parse করে, validation চালায়।' },
-              { from: 'api', to: 'db', label: 'SELECT … WHERE email=$1', desc: 'Fiber parameterized query দিয়ে PostgreSQL থেকে user খোঁজে এবং bcrypt hash মিলিয়ে দেখে।' },
+              { from: 'nginx', to: 'api', label: 'proxy_pass :3000', desc: 'Nginx reverse proxy request-টি localhost:3000-এ চলা Node.js (Express) app-এ পাঠায়। App JSON body parse করে, validation চালায়।' },
+              { from: 'api', to: 'db', label: 'SELECT … WHERE email=$1', desc: 'App parameterized query দিয়ে PostgreSQL থেকে user খোঁজে এবং bcrypt hash মিলিয়ে দেখে।' },
               { from: 'db', to: 'api', label: 'user row', desc: 'Database user-এর তথ্য ফেরত দেয়। Password hash মিলে গেছে।' },
-              { from: 'api', to: 'client', label: '200 OK + Set-Cookie', desc: 'Fiber session তৈরি করে (Redis-এ রাখে) এবং HttpOnly; Secure cookie সহ 200 OK পাঠায়। Response একই পথে উল্টো দিকে ফেরে।' },
+              { from: 'api', to: 'client', label: '200 OK + Set-Cookie', desc: 'App session তৈরি করে (Redis-এ রাখে) এবং HttpOnly; Secure cookie সহ 200 OK পাঠায়। Response একই পথে উল্টো দিকে ফেরে।' },
             ],
           },
           {
@@ -85,7 +85,7 @@ export default [
               { from: 'client', to: 'cf', label: "POST email=' OR 1=1--", status: 'evil', desc: 'Attacker Burp Suite দিয়ে request intercept করে body-তে SQL payload ঢুকিয়েছে। লক্ষ্য করো — এটাও সম্পূর্ণ valid HTTPS request! TLS এটাকে আটকায় না।' },
               { from: 'cf', to: 'nginx', label: 'forward', status: 'evil', desc: 'WAF rule বন্ধ থাকায় Cloudflare request-টি সরাসরি পাঠিয়ে দিল।' },
               { from: 'nginx', to: 'api', label: 'proxy_pass', status: 'evil', desc: 'Nginx শুধু forward করে — এটা body-র অর্থ বোঝে না।' },
-              { from: 'api', to: 'db', label: "WHERE email='' OR 1=1--", status: 'evil', desc: 'দুর্বল Go code string concatenation দিয়ে query বানিয়েছে। Payload query-র অর্থ বদলে দিল — এখন শর্ত সবসময় সত্য!' },
+              { from: 'api', to: 'db', label: "WHERE email='' OR 1=1--", status: 'evil', desc: 'দুর্বল backend code string concatenation দিয়ে query বানিয়েছে। Payload query-র অর্থ বদলে দিল — এখন শর্ত সবসময় সত্য!' },
               { from: 'db', to: 'api', label: 'ALL users 😱', status: 'evil', desc: 'Database প্রথম user (প্রায়ই admin) ফেরত দিল।' },
               { from: 'api', to: 'client', label: '200 OK (admin)', status: 'evil', desc: 'Attacker password ছাড়াই admin হিসেবে login করে ফেলল। HTTPS থাকা সত্ত্বেও!' },
             ],
@@ -96,7 +96,7 @@ export default [
               { from: 'client', to: 'cf', label: "POST email=' OR 1=1--", status: 'evil', desc: 'একই malicious request।' },
               { from: 'cf', to: 'nginx', label: 'WAF: suspicious ⚠', status: 'evil', desc: 'Cloudflare WAF (Managed Rules) SQLi pattern সনাক্ত করতে পারে — কিন্তু WAF একটি অতিরিক্ত স্তর মাত্র, এর উপর পুরো ভরসা নয়। ধরো এটা bypass করে গেল।' },
               { from: 'nginx', to: 'api', label: 'proxy_pass', status: 'evil', desc: 'Request backend-এ পৌঁছাল।' },
-              { from: 'api', to: 'api', label: '400 validation ✖', status: 'blocked', desc: 'Fiber-এর input validation: email format valid নয় → 400 Bad Request। আর validation না থাকলেও parameterized query ($1) payload-কে শুধু data হিসেবে দেখত।' },
+              { from: 'api', to: 'api', label: '400 validation ✖', status: 'blocked', desc: 'App-এর input validation: email format valid নয় → 400 Bad Request। আর validation না থাকলেও parameterized query ($1) payload-কে শুধু data হিসেবে দেখত।' },
               { from: 'api', to: 'client', label: '400 Bad Request', status: 'blocked', desc: 'আক্রমণ ব্যর্থ। Defense in Depth: WAF + validation + parameterized query + least-privilege DB user।' },
             ],
           },
@@ -107,11 +107,11 @@ export default [
         title: '3D Architecture Explorer — Attack Surface Map',
         intro: 'Mouse দিয়ে 3D scene ঘোরাও। প্রতিটি layer-এ ক্লিক করে দেখো সেখানে কী ধরনের attack হতে পারে এবং কীভাবে রক্ষা করবে।',
         layers: [
-          { name: 'Client / Browser', sub: 'React · Next.js · Flutter', color: '#22d3ee', risks: ['XSS', 'Malicious browser extension', 'localStorage-এ token চুরি', 'Insecure mobile storage'], defense: ['Untrusted output escape', 'HttpOnly cookie', 'CSP header', 'Secure storage (Keychain/Keystore)'] },
+          { name: 'Client / Browser', sub: 'React · Vue · mobile app', color: '#22d3ee', risks: ['XSS', 'Malicious browser extension', 'localStorage-এ token চুরি', 'Insecure mobile storage'], defense: ['Untrusted output escape', 'HttpOnly cookie', 'CSP header', 'Secure storage (Keychain/Keystore)'] },
           { name: 'DNS / Network', sub: 'Resolver · ISP · Wi-Fi', color: '#a78bfa', risks: ['DNS hijacking', 'MITM on public Wi-Fi', 'SSL stripping'], defense: ['HTTPS everywhere + HSTS', 'DNSSEC', 'Registrar lock + 2FA'] },
           { name: 'Cloudflare / Proxy', sub: 'DNS · SSL · WAF · Rate limit', color: '#fb923c', risks: ['Origin IP leak → CF bypass', 'Flexible SSL mode', 'WAF misconfiguration'], defense: ['Full (strict) SSL', 'Origin শুধু CF IP allow', 'WAF managed rules + rate limit'] },
           { name: 'Nginx', sub: 'Reverse proxy · Routing', color: '#4ade80', risks: ['server_tokens leak', 'autoindex on', 'Alias path traversal', 'Large body DoS'], defense: ['Security headers', 'client_max_body_size', 'limit_req', 'server_tokens off'] },
-          { name: 'Go Fiber API', sub: 'Auth · Validation · Logic', color: '#f472b6', risks: ['SQL Injection', 'IDOR / BOLA', 'Broken authentication', 'Mass assignment'], defense: ['Validate every input', 'Server-side authorization', 'Parameterized query', 'DTO / allowlist fields'] },
+          { name: 'Node.js API', sub: 'Auth · Validation · Logic', color: '#f472b6', risks: ['SQL Injection', 'IDOR / BOLA', 'Broken authentication', 'Mass assignment'], defense: ['Validate every input', 'Server-side authorization', 'Parameterized query', 'DTO / allowlist fields'] },
           { name: 'PostgreSQL / Redis', sub: 'Data layer', color: '#fbbf24', risks: ['Public 5432/6379 port', 'Superuser app account', 'Redis no-auth'], defense: ['Private network only', 'Least-privilege role', 'requirepass + ACL', 'Encryption at rest'] },
         ],
       },
@@ -136,7 +136,7 @@ export default [
       },
     ],
     quiz: [
-      { q: 'একজন user Burp Suite দিয়ে request বদলে অন্য product_id পাঠাল। Permission কোথায় চেক হওয়া উচিত?', options: ['React frontend', 'Go Fiber backend', 'Cloudflare DNS', 'Browser cookies'], answer: 1, explain: 'Frontend-কে বাইপাস করা যায়। Authorization সবসময় server-side।' },
+      { q: 'একজন user Burp Suite দিয়ে request বদলে অন্য product_id পাঠাল। Permission কোথায় চেক হওয়া উচিত?', options: ['React frontend', 'Node.js (Express) backend', 'Cloudflare DNS', 'Browser cookies'], answer: 1, explain: 'Frontend-কে বাইপাস করা যায়। Authorization সবসময় server-side।' },
       { q: 'HTTPS কী সুরক্ষা দেয়?', options: ['সব application vulnerability', 'TLS endpoint-গুলোর মাঝে data in transit', 'Database permissions', 'User authorization'], answer: 1, explain: 'HTTPS শুধু channel encrypt করে — SQLi, XSS, IDOR আটকায় না।' },
       { q: 'Authenticated user অন্যের order মুছতে চাইলে সাধারণত কোন status উপযুক্ত?', options: ['200', '301', '403', '503'], answer: 2, explain: 'চেনা user, কিন্তু অনুমতি নেই — 403 Forbidden (অথবা existence লুকাতে 404)।' },
       { q: 'API request-এর headers ও payload কোথায় দেখা যায়?', options: ['Chrome DevTools → Network tab', 'DNS settings', 'Linux file manager', 'Database backup'], answer: 0, explain: 'F12 → Network।' },
@@ -226,7 +226,7 @@ export default [
     title: 'Authentication বনাম Authorization',
     subtitle: '"তুমি কে?" আর "তুমি কী করতে পারো?"',
     duration: '৩০ মিনিট',
-    goals: ['AuthN ও AuthZ-এর পার্থক্য', 'Role-based ও ownership-based access control', 'Broken Access Control — OWASP #1', 'Go Fiber middleware দিয়ে সঠিক enforcement'],
+    goals: ['AuthN ও AuthZ-এর পার্থক্য', 'Role-based ও ownership-based access control', 'Broken Access Control — OWASP #1', 'Middleware দিয়ে সঠিক enforcement'],
     steps: [
       {
         title: 'দুটি আলাদা প্রশ্ন',
@@ -374,7 +374,7 @@ export default [
       },
       {
         title: 'Trust Boundary',
-        body: 'যেখানে data এক বিশ্বাসের স্তর থেকে আরেক স্তরে যায় সেটাই Trust Boundary। যেমন: Internet → Cloudflare, Nginx → Fiber, Fiber → PostgreSQL, Mobile app → API। প্রতিটি boundary পার হওয়ার সময় validation, authentication ও authorization দরকার।',
+        body: 'যেখানে data এক বিশ্বাসের স্তর থেকে আরেক স্তরে যায় সেটাই Trust Boundary। যেমন: Internet → Cloudflare, Nginx → App server, App server → PostgreSQL, Mobile app → API। প্রতিটি boundary পার হওয়ার সময় validation, authentication ও authorization দরকার।',
       },
       {
         title: 'STRIDE — ৬ ধরনের Threat',
@@ -391,7 +391,7 @@ export default [
       {
         type: 'classify',
         title: 'STRIDE Lab — Threat-কে সঠিক শ্রেণিতে রাখো',
-        intro: 'তোমার Next.js + Go Fiber + PostgreSQL + Redis architecture-এর ৯টি বাস্তব threat। প্রতিটিকে STRIDE-এর সঠিক অক্ষরে রাখো।',
+        intro: 'একটি সাধারণ online দোকানের (React + Node.js + PostgreSQL + Redis) architecture-এর ৯টি বাস্তব threat। প্রতিটিকে STRIDE-এর সঠিক অক্ষরে রাখো।',
         buckets: [
           { id: 'S', label: 'S · Spoofing', color: '#22d3ee' },
           { id: 'T', label: 'T · Tampering', color: '#a78bfa' },
@@ -420,7 +420,7 @@ export default [
           { name: 'Internet (Untrusted)', sub: 'যে কেউ, যেকোনো request', color: '#f87171', risks: ['সব input সন্দেহজনক', 'Bot, scanner, attacker'], defense: ['ধরে নাও সবকিছু malicious'] },
           { name: 'Boundary 1: Edge', sub: 'Cloudflare', color: '#fb923c', risks: ['DDoS', 'Bot traffic', 'Known exploit pattern'], defense: ['WAF', 'Rate limit', 'TLS termination'] },
           { name: 'Boundary 2: Proxy', sub: 'Nginx', color: '#fbbf24', risks: ['Header spoofing (X-Forwarded-For)', 'Oversized body'], defense: ['Trusted proxy config', 'Body size limit'] },
-          { name: 'Boundary 3: Application', sub: 'Go Fiber', color: '#4ade80', risks: ['Injection', 'Broken AuthZ', 'Business logic abuse'], defense: ['Validation', 'AuthN + AuthZ', 'Parameterized query'] },
+          { name: 'Boundary 3: Application', sub: 'Node.js (Express)', color: '#4ade80', risks: ['Injection', 'Broken AuthZ', 'Business logic abuse'], defense: ['Validation', 'AuthN + AuthZ', 'Parameterized query'] },
           { name: 'Boundary 4: Data', sub: 'PostgreSQL · Redis', color: '#22d3ee', risks: ['Excess privilege', 'Data exfiltration'], defense: ['Least privilege role', 'Private network', 'Encryption'] },
         ],
       },

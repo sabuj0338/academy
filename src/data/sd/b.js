@@ -149,7 +149,7 @@ export default [
         height: 360,
         nodes: [
           { id: 'u', x: 8, y: 50, icon: '🧑', label: 'Users' },
-          { id: 'app', x: 34, y: 50, icon: '⚙️', label: 'Go API' },
+          { id: 'app', x: 34, y: 50, icon: '⚙️', label: 'API server' },
           { id: 'redis', x: 64, y: 20, icon: '⚡', label: 'Redis', sub: 'RAM, <1ms' },
           { id: 'db', x: 64, y: 80, icon: '🗄️', label: 'PostgreSQL', sub: '20ms' },
           { id: 'admin', x: 92, y: 80, icon: '🛠️', label: 'Admin', sub: 'দাম বদলায়' },

@@ -211,7 +211,7 @@ export default [
           { id: 'int', x: 36, y: 20, icon: '🏢', label: 'Intermediate', sub: "Let's Encrypt R11" },
           { id: 'leaf', x: 62, y: 20, icon: '📜', label: 'api.shop.com cert' },
           { id: 'br', x: 88, y: 20, icon: '🌐', label: 'Browser', sub: 'trust store' },
-          { id: 'certbot', x: 36, y: 78, icon: '🤖', label: 'certbot', sub: 'তোমার VPS' },
+          { id: 'certbot', x: 36, y: 78, icon: '🤖', label: 'certbot', sub: 'তোমার server' },
           { id: 'acme', x: 62, y: 78, icon: '✅', label: 'ACME server', sub: "Let's Encrypt" },
           { id: 'web', x: 88, y: 78, icon: '🖥️', label: 'shop.com:80', sub: '/.well-known/' },
         ],
@@ -389,7 +389,7 @@ export default [
       {
         type: 'map',
         title: 'Proxy, VPN ও Load Balancer',
-        intro: 'তিনটি mode: অফিসের forward proxy, তোমার stack-এর reverse proxy + load balancer, আর cafe থেকে VPN tunnel।',
+        intro: 'তিনটি mode: অফিসের forward proxy, website-এর reverse proxy + load balancer, আর cafe থেকে VPN tunnel।',
         height: 380,
         nodes: [],
         modes: [

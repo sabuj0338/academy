@@ -88,7 +88,7 @@ export default [
         nodes: [
           { id: 'user', label: 'তোমার Browser', icon: '🧑', sub: 'bank-এ logged in' },
           { id: 'evil', label: 'evil.example', icon: '😈', sub: 'Attacker-এর site' },
-          { id: 'bank', label: 'bank.example', icon: '🏦', sub: 'Go Fiber API' },
+          { id: 'bank', label: 'bank.example', icon: '🏦', sub: 'Node.js API' },
         ],
         modes: [
           { id: 'a', name: 'Attack (কোনো সুরক্ষা নেই)', kind: 'attack', hops: [
@@ -121,7 +121,7 @@ export default [
     cheat: {
       category: 'Web Attacks', severity: 'high',
       summary: 'অন্য site তোমার browser দিয়ে cookie সহ state-changing request পাঠায়।',
-      rules: ['SameSite=Lax/Strict', 'CSRF token (Fiber csrf middleware)', 'Origin header যাচাই', 'State change কখনো GET-এ নয়', 'সংবেদনশীল কাজে re-auth'],
+      rules: ['SameSite=Lax/Strict', 'CSRF token (server-এ যাচাই)', 'Origin header যাচাই', 'State change কখনো GET-এ নয়', 'সংবেদনশীল কাজে re-auth'],
       checklist: ['Cookie-তে SameSite আছে?', 'POST/PUT/DELETE-এ token যাচাই হয়?', 'অন্য origin থেকে form submit test'],
       remember: 'Cookie নিজে থেকে যায় — তাই শুধু cookie যথেষ্ট প্রমাণ নয়।',
     },
@@ -135,7 +135,7 @@ export default [
     title: 'SQL Injection',
     subtitle: 'Input দিয়ে query-র অর্থ বদলে দেওয়া',
     duration: '৪৫ মিনিট',
-    goals: ['String concatenation কেন বিপজ্জনক', 'Login bypass, UNION, blind SQLi', 'Go-তে parameterized query', 'Least privilege ও error handling'],
+    goals: ['String concatenation কেন বিপজ্জনক', 'Login bypass, UNION, blind SQLi', 'JavaScript-এ parameterized query', 'Least privilege ও error handling'],
     steps: [
       {
         title: 'আক্রমণটা বোঝো',
@@ -162,10 +162,10 @@ export default [
           { label: 'নিরাপদ · JavaScript (node-postgres)', lang: 'js', kind: 'good', text: 'const { rows } = await db.query(\n  \'SELECT id, role, password_hash FROM users WHERE email = $1\',\n  [email],\n);\n// তারপর: await bcrypt.compare(password, rows[0].password_hash)' },
           { label: 'ORDER BY allowlist', lang: 'js', kind: 'good', text: 'const allowed = { price: \'price\', date: \'created_at\' };\nconst col = allowed[req.query.sort] ?? \'created_at\';' },
         ],
-        points: ['সব জায়গায় parameterized query / ORM (GORM, sqlc)', 'Input validation (email format, int ID)', 'App DB user-এর least privilege — DROP/superuser নয়', 'Database error client-কে দেখাবে না'],
+        points: ['সব জায়গায় parameterized query / ORM (Prisma, Drizzle, Sequelize)', 'Input validation (email format, int ID)', 'App DB user-এর least privilege — DROP/superuser নয়', 'Database error client-কে দেখাবে না'],
       },
     ],
-    labs: [{ type: 'sqli', title: 'Vulnerable Login Lab', intro: 'এটি সম্পূর্ণ সিমুলেটেড login (তোমার browser-এই চলে)। Input দিলে Go backend কোন query বানায় তা লাইভ দেখো, login bypass করো, অন্য টেবিলের data বের করো — তারপর Parameterized Mode চালু করে দেখো সব ব্যর্থ হয়।' }],
+    labs: [{ type: 'sqli', title: 'Vulnerable Login Lab', intro: 'এটি সম্পূর্ণ সিমুলেটেড login (তোমার browser-এই চলে)। Input দিলে backend কোন query বানায় তা লাইভ দেখো, login bypass করো, অন্য টেবিলের data বের করো — তারপর Parameterized Mode চালু করে দেখো সব ব্যর্থ হয়।' }],
     quiz: [
       { q: 'SQLi প্রতিরোধের প্রধান উপায়?', options: ['HTTPS', 'Parameterized query', 'Password hashing', 'CAPTCHA'], answer: 1, explain: 'Input কখনো query-র code হয় না।' },
       { q: 'SQL-এ "--" কী করে?', options: ['বিয়োগ', 'বাকি লাইন comment', 'টেবিল মোছে', 'Loop'], answer: 1, explain: 'এর পরের অংশ উপেক্ষিত।' },
@@ -325,7 +325,7 @@ export default [
     steps: [
       {
         title: 'আক্রমণটা বোঝো',
-        body: 'Avatar upload feature। Attacker "photo.php" বা "shell.jpg.php" upload করল। Server যদি ফাইলটি web root-এ রাখে এবং PHP/CGI চালায় — attacker এখন server-এ command চালাতে পারে (Remote Code Execution)। Go/Node-এ সরাসরি execute কম হলেও অন্য ঝুঁকি আছে।',
+        body: 'Avatar upload feature। Attacker "photo.php" বা "shell.jpg.php" upload করল। Server যদি ফাইলটি web root-এ রাখে এবং PHP/CGI চালায় — attacker এখন server-এ command চালাতে পারে (Remote Code Execution)। Node.js-এর মতো platform-এ সরাসরি execute কম হলেও অন্য ঝুঁকি আছে।',
         points: ['Web shell (.php, .jsp) → RCE', 'SVG-তে <script> → Stored XSS', 'HTML ফাইল → phishing page তোমার domain-এ', 'Zip bomb / 10GB ফাইল → DoS', 'Filename: ../../etc/cron.d/x → path traversal', 'ImageMagick/ffmpeg parser exploit'],
       },
       {
@@ -362,7 +362,7 @@ export default [
     title: 'Path Traversal',
     subtitle: '../../ দিয়ে server-এর ফাইল পড়া',
     duration: '২৫ মিনিট',
-    goals: ['../ sequence কীভাবে folder থেকে বের হয়', 'Encoding bypass', 'Go-তে filepath.Clean ও base-check', 'Nginx alias misconfig'],
+    goals: ['../ sequence কীভাবে folder থেকে বের হয়', 'Encoding bypass', 'Node.js-এ path.resolve ও base-check', 'Nginx alias misconfig'],
     steps: [
       {
         title: 'আক্রমণটা বোঝো',
@@ -403,13 +403,13 @@ export default [
     ],
     quiz: [
       { q: '/app/uploads/../../etc/passwd resolve হলে কোথায় যায়?', options: ['/app/uploads/etc/passwd', '/etc/passwd', '/app/etc/passwd', 'Error'], answer: 1, explain: 'দুইবার উপরে → root।' },
-      { q: 'শুধু "../" replace করলে কেন যথেষ্ট নয়?', options: ['Encoding ও ....// bypass', 'Go-তে replace নেই', 'ধীর', 'যথেষ্ট'], answer: 0, explain: 'Normalize করে base check করো।' },
+      { q: 'শুধু "../" replace করলে কেন যথেষ্ট নয়?', options: ['Encoding ও ....// bypass', 'JavaScript-এ replace কাজ করে না', 'ধীর', 'যথেষ্ট'], answer: 0, explain: 'Normalize করে base check করো।' },
       { q: 'সবচেয়ে নিরাপদ design কী?', options: ['User থেকে full path নেওয়া', 'File ID নিয়ে DB থেকে path', 'Regex দিয়ে ../ সরানো', 'Base64 filename'], answer: 1, explain: 'User path নিয়ন্ত্রণই করে না।' },
     ],
     cheat: {
       category: 'Web Attacks', severity: 'high',
       summary: '../ দিয়ে নির্ধারিত folder থেকে বের হয়ে server-এর যেকোনো ফাইল পড়া।',
-      rules: ['User থেকে path নয় — ID নাও', 'filepath.Base + Join + prefix check', 'Go 1.24+ os.OpenRoot', 'App user-এর file permission সীমিত', 'Nginx alias-এ trailing slash মেলাও'],
+      rules: ['User থেকে path নয় — ID নাও', 'filepath.Base + Join + prefix check', 'Express: res.sendFile(name, { root })', 'App user-এর file permission সীমিত', 'Nginx alias-এ trailing slash মেলাও'],
       checklist: ['../../etc/passwd, %2e%2e%2f, ....// test', 'File serve করা সব endpoint তালিকা'],
       remember: 'Normalize করো, তারপর base-এর ভেতরে কিনা যাচাই।',
     },
@@ -533,10 +533,10 @@ export default [
         code: [{ label: 'সঠিক message', lang: 'text', kind: 'good', text: '"Email অথবা password ভুল।"   ← সব ক্ষেত্রে একই\nForgot password: "Account থাকলে আমরা email পাঠিয়েছি।"' }],
       },
       {
-        title: 'Rate Limiting (Go Fiber)',
+        title: 'Rate Limiting (Express)',
         body: 'IP এবং account উভয় ভিত্তিতে limit দাও। Redis দিয়ে store করো যাতে একাধিক instance-এ কাজ করে।',
         code: [{ label: 'Express · express-rate-limit', lang: 'js', kind: 'good', text: 'import rateLimit from \'express-rate-limit\';\n\nconst loginLimiter = rateLimit({\n  windowMs: 60 * 1000,   // ১ মিনিট\n  limit: 5,              // প্রতি IP + email-এ ৫ বার\n  keyGenerator: (req) => req.ip + \':\' + String(req.body.email).toLowerCase(),\n  standardHeaders: true, // RateLimit-* header পাঠাও\n});\n\napp.post(\'/api/login\', loginLimiter, loginHandler);' }],
-        warn: 'Cloudflare-এর পেছনে থাকলে c.IP() Cloudflare-এর IP দেবে! Fiber Config-এ ProxyHeader: "CF-Connecting-IP" এবং TrustedProxies সেট করো।',
+        warn: 'CDN বা proxy-র (Cloudflare, Nginx) পেছনে থাকলে req.ip দেবে proxy-র IP — সব user-কে একজন মনে হবে! Express-এ app.set("trust proxy", …) দিয়ে শুধু বিশ্বস্ত proxy-কে মানো।',
       },
       {
         title: 'Defense in Depth',
@@ -548,7 +548,7 @@ export default [
     quiz: [
       { q: 'অনেক account-এ একটি সাধারণ password চেষ্টা করাকে কী বলে?', options: ['Credential stuffing', 'Password spraying', 'Phishing', 'Brute-force'], answer: 1, explain: 'Lockout এড়ানোর কৌশল।' },
       { q: '"এই email registered নয়" message-এর সমস্যা কী?', options: ['কোনো সমস্যা নেই', 'User enumeration', 'XSS', 'CSRF'], answer: 1, explain: 'Attacker valid email তালিকা বানায়।' },
-      { q: 'Cloudflare-এর পেছনে Fiber-এ আসল client IP পেতে কী লাগবে?', options: ['c.IP() যথেষ্ট', 'ProxyHeader CF-Connecting-IP + TrustedProxies', 'X-Real-IP যেকোনো জায়গা থেকে', 'Cookie'], answer: 1, explain: 'নইলে সব user একই IP।' },
+      { q: 'Cloudflare-এর পেছনে Express app-এ আসল client IP পেতে কী লাগবে?', options: ['req.ip যেমন আছে তেমনই যথেষ্ট', 'trust proxy-তে শুধু Cloudflare-এর IP range বসানো', 'X-Real-IP যেকোনো জায়গা থেকে', 'Cookie'], answer: 1, explain: 'নইলে সব user একই IP।' },
     ],
     cheat: {
       category: 'Authentication', severity: 'high',

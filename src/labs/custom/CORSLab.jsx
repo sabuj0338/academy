@@ -4,11 +4,11 @@ import { useCompletion } from '../../components/ui.jsx';
 
 const CONFIGS = [
   { id: 'none', name: 'কোনো CORS header নেই', code: '// cors middleware নেই' },
-  { id: 'reflect', name: 'Origin reflect + credentials', code: 'AllowOriginsFunc: func(o string) bool { return true },\nAllowCredentials: true' },
-  { id: 'wild', name: 'Wildcard *', code: 'AllowOrigins: "*"' },
-  { id: 'suffix', name: 'Suffix check (bug)', code: 'AllowOriginsFunc: func(o string) bool {\n  return strings.HasSuffix(o, "example.com")\n},\nAllowCredentials: true' },
-  { id: 'nul', name: '"null" allowed', code: 'AllowOrigins: "https://app.example.com, null",\nAllowCredentials: true' },
-  { id: 'allow', name: 'Explicit allowlist', code: 'AllowOrigins: "https://app.example.com",\nAllowCredentials: true' },
+  { id: 'reflect', name: 'Origin reflect + credentials', code: "origin: true,   // যে আসে তাকেই অনুমতি\ncredentials: true" },
+  { id: 'wild', name: 'Wildcard *', code: "origin: '*'" },
+  { id: 'suffix', name: 'Suffix check (bug)', code: "origin: (o, cb) => cb(null, o.endsWith('example.com')),\ncredentials: true" },
+  { id: 'nul', name: '"null" allowed', code: "origin: ['https://app.example.com', 'null'],\ncredentials: true" },
+  { id: 'allow', name: 'Explicit allowlist', code: "origin: 'https://app.example.com',\ncredentials: true" },
 ];
 const ORIGINS = [
   { o: 'https://app.example.com', label: 'তোমার frontend', good: true },
@@ -49,7 +49,7 @@ export default function CORSLab({ onComplete }) {
     <div className="stack">
       <div className="grid2">
         <div className="card">
-          <div className="section-h">⚙️ Go Fiber CORS config বেছে নাও</div>
+          <div className="section-h">⚙️ Express-এর cors() config বেছে নাও</div>
           <div className="stack" style={{ gap: 6 }}>
             {CONFIGS.map((c) => <button key={c.id} className={'btn sm ' + (cfg === c.id ? 'primary' : '')} style={{ justifyContent: 'flex-start' }} onClick={() => { setCfg(c.id); setResults({}); }}>{c.name}</button>)}
           </div>

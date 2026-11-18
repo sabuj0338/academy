@@ -202,9 +202,9 @@ export default [
         points: ['--privileged → প্রায় সব kernel capability', '/var/run/docker.sock mount → container থেকে নতুন privileged container চালিয়ে host root', 'Root user + kernel bug', 'Host path (/) mount'],
       },
       {
-        title: 'নিরাপদ Dockerfile (Go)',
+        title: 'নিরাপদ Dockerfile (Node.js)',
         body: 'Multi-stage build: compile আলাদা stage-এ, final image-এ শুধু binary।',
-        code: [{ label: 'Dockerfile', lang: 'dockerfile', kind: 'good', text: 'FROM golang:1.23-alpine AS build\nWORKDIR /src\nCOPY go.* ./\nRUN go mod download\nCOPY . .\nRUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /app ./cmd/api\n\nFROM gcr.io/distroless/static-debian12:nonroot\nCOPY --from=build /app /app\nUSER nonroot:nonroot\nEXPOSE 3000\nENTRYPOINT ["/app"]' }],
+        code: [{ label: 'Dockerfile', lang: 'dockerfile', kind: 'good', text: '# ধাপ ১: dependency install (build-এর জন্য)\nFROM node:22-alpine AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci --omit=dev\nCOPY src ./src\n\n# ধাপ ২: ছোট, shell-হীন runtime image\nFROM gcr.io/distroless/nodejs22-debian12:nonroot\nWORKDIR /app\nCOPY --from=build /app /app\nUSER nonroot\nEXPOSE 3000\nCMD ["src/server.js"]' }],
         points: ['Distroless/alpine — shell নেই, attack surface কম', 'USER nonroot', '.dockerignore-এ .env, .git', 'Image-এ secret নয় (ENV/ARG/COPY .env) — runtime-এ inject', 'Image tag pin (digest)'],
       },
       {
@@ -307,7 +307,7 @@ export default [
           { id: 'isp', label: 'ISP / Wi-Fi', icon: '📶', sub: 'পথ ১' },
           { id: 'cf', label: 'Cloudflare', icon: '☁️', sub: 'Edge' },
           { id: 'dc', label: 'Datacenter link', icon: '🛰️', sub: 'পথ ২' },
-          { id: 'o', label: 'Origin Nginx', icon: '🖥️', sub: 'তোমার VPS' },
+          { id: 'o', label: 'Origin Nginx', icon: '🖥️', sub: 'তোমার server' },
         ],
         modes: [
           { id: 'flex', name: 'Flexible ⚠', kind: 'attack', hops: [

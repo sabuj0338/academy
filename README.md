@@ -1,44 +1,61 @@
-# Engineering Academy — বাংলায় Networking · System Design · Security
+# Engineering Academy — বাংলায় দেখে-ছুঁয়ে শেখো
 
-Interactive (2D + 3D + framer-motion) Software Engineering Masterclass — তিনটি learning track, একই শেখার ছন্দে:
-Concept → Visual Simulation → Real-world Example → Hands-on Practice → Cheatsheet → Assessment।
+শিক্ষানবিশদের জন্য বাংলায় interactive প্রযুক্তি কোর্স — 3D animation, 2D diagram, হাতে-কলমে lab, quiz আর এক পাতার cheatsheet। কোনো পূর্ব অভিজ্ঞতা লাগে না, কোনো account লাগে না।
 
 🔗 **Live:** https://sabuj0338.github.io/academy/
 
-| Track | Phase | Lesson | Lab |
+| কোর্স | Level | Lesson | Lab |
 |---|---|---|---|
-| 🌐 Computer Networking | ১২ | ১২ | ৩২ |
-| 🏗️ System Design | ১৬ | ১৬ | ৩৭ |
-| 🛡️ Application & Infrastructure Security | ৬ | ৪০ | ৪৭ |
+| 🌐 নেটওয়ার্কিং — Internet আসলে কীভাবে চলে? | একদম শুরু থেকে | ১২ | ৩২ |
+| 🏗️ সিস্টেম ডিজাইন — বড় app কীভাবে বানানো হয়? | শুরু → মাঝারি | ১৬ | ৩৭ |
+| 🛡️ সিকিউরিটি — App-কে কীভাবে সুরক্ষিত রাখব? | শুরু → উন্নত | ৪০ | ৪৭ |
 
-প্রতিটি lesson-এ: “সহজ কথায়” ব্যাখ্যা (১৪ বছরের ছাত্রও যেন বোঝে), মূল শব্দের tooltip, উপমা (analogy), animated chain/compare diagram, interactive lab, quiz ও pocket cheatsheet। Lesson-গুলো track-এর মধ্যে link করা (যেমন Networking-এর TLS ↔ Security-এর TLS hardening)।
+প্রতিটি lesson-এ: “সহজ কথায়” ব্যাখ্যা, নতুন শব্দের tooltip, উপমা, ধাপে ধাপে চলা diagram, পড়ার মাঝে “থামো, ভাবো” প্রশ্ন, interactive lab, quiz, mind map + flashcard দিয়ে ঝালাই, আর cheatsheet। Code উদাহরণ JavaScript (Node.js / Express / React Native)-এ।
 
 ## চালাও
 
+Node.js 22.12 বা নতুন লাগবে।
+
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # dist/ — যেকোনো static host-এ deploy করা যায়
+npm run dev        # http://localhost:5173/academy/
+npm run build      # dist/ — static HTML, যেকোনো static host-এ চলে
+npm run preview    # build করা site দেখো
 ```
 
 `main`-এ push করলেই `.github/workflows/deploy.yml` build করে GitHub Pages-এ deploy করে।
+
+## কীভাবে বানানো
+
+- **[Astro 6](https://astro.build)** — প্রতিটি কোর্স, lesson ও cheatsheet-এর নিজস্ব static page (`/courses/net/`, `/learn/net-dns/`, `/handbook/sec/`)। Lesson-এর লেখা build-এর সময়ই HTML-এ থাকে।
+- **React islands** — lesson player, lab, 3D scene ও উপরের nav browser-এ interactive হয় (`client:load`)।
+- **Tailwind CSS v4** — page ও layout। Design token (`src/styles.css`) Tailwind রঙে map করা (`bg-panel`, `text-muted`, `border-line` …), তাই light/dark theme নিজে থেকেই কাজ করে।
+- **Three.js / react-three-fiber** — 3D globe, 3D sequence, 3D architecture।
+- অগ্রগতি, XP ও streak browser-এর localStorage-এ। সব simulation browser-এর ভেতরে — কোনো আসল network request যায় না।
 
 ## গঠন
 
 | Path | কী আছে |
 |---|---|
-| `src/data/curriculum.js` | তিনটি track, phase, lesson-এর কেন্দ্র; cross-track scenario map |
-| `src/data/net/` | Networking track (12 phase) |
-| `src/data/sd/` | System Design track (16 phase) |
-| `src/data/phase1-6.js`, `simple.js` | Security track ও তার “সহজ কথায়” ব্যাখ্যা |
-| `src/data/visuals/` | প্রতিটি ধাপের বাড়তি visual block (নিচে দেখো) — lesson data না ছুঁয়ে উপর থেকে জোড়া হয় |
-| `src/components/blocks.jsx`, `src/lesson.css` | পাঠের ভেতরের visual block-এর renderer |
-| `src/labs/viz/` | নতুন visual engine: Map (2D architecture flow), Seq3D (3D sequence diagram), Globe (3D পৃথিবী), Encapsulation, Subnet, TCP vs UDP, Wireshark, Routing/NAT, Keys (আসল WebCrypto), Estimate, Scale, Cache, Load Balancer, Shard, Queue, Circuit Breaker, CAP, Transaction, Index, Trace, Kubernetes |
-| `src/labs/engines/` | Flow, Arch3D, Request, Audit, Terminal, Classify |
-| `src/labs/custom/` | Security-specific lab (SQLi, XSS, JWT, …) |
-| `src/labs/handlers.js`, `terminalPresets.js` | সিমুলেটেড backend ও terminal |
+| `src/pages/` | Astro route: `index`, `courses/[id]`, `learn/[id]`, `handbook/[id]`, `404` |
+| `src/layouts/Base.astro` | `<head>`, theme, nav, footer |
+| `src/views/` | Page-এর React island: Home, CoursesPage, CoursePage, HandbookPage |
+| `src/components/LessonView.jsx` | Lesson player (পাঠ · ল্যাব · কুইজ · চিটশিট) |
+| `src/components/blocks.jsx` | পাঠের ভেতরের visual block-এর renderer |
+| `src/data/courses.js` | **কোর্সের তালিকা** — title, level, যা শিখবে, শুরুর আগে, unit |
+| `src/data/curriculum.js` | কোর্স, phase ও lesson জোড়া লাগানো + helper |
+| `src/data/net/`, `src/data/sd/`, `src/data/phase1-6.js` | তিন কোর্সের lesson |
+| `src/data/visuals/` | ধাপে বাড়তি visual block — lesson data না ছুঁয়ে উপর থেকে জোড়া হয় |
+| `src/labs/` | Lab engine (`viz/`, `engines/`) ও security lab (`custom/`) |
+| `src/lib/progress.js`, `src/lib/nav.js` | অগ্রগতির store, আর সব URL এক জায়গায় |
 
-নতুন lesson যোগ করতে track-এর data file-এ একটি object যোগ করো। বেশিরভাগ ক্ষেত্রে `map`, `seq3d`, `globe`, `classify`, `terminal` engine-এ শুধু data দিলেই নতুন lab তৈরি হয় — code লাগে না।
+### নতুন কোর্স যোগ করা
+
+1. `src/data/<course>/`-এ lesson file বানাও (বিদ্যমান lesson-এর গঠন অনুসরণ করো) আর একটি `index.js`-এ phase ও lesson export করো।
+2. `src/data/courses.js`-এ কোর্সের একটি object যোগ করো (id, icon, title, level, outcomes, prerequisites, units …)। `upcoming` থেকে তার “শীঘ্রই আসছে” কার্ড সরিয়ে দাও।
+3. `src/data/curriculum.js`-এ নতুন কোর্সের phase ও lesson `phases` আর `lessons` তালিকায় জুড়ে দাও।
+
+Catalog card, course page, syllabus path, lesson page, cheatsheet — সব নিজে থেকেই তৈরি হবে। বেশিরভাগ lab-এর জন্য code লাগে না: `map`, `seq3d`, `globe`, `classify`, `terminal` engine-এ শুধু data দিলেই চলে।
 
 ### পাঠের ভেতরের visual block
 
@@ -55,6 +72,4 @@ npm run build      # dist/ — যেকোনো static host-এ deploy কর�
 
 এছাড়া নিজে থেকেই হয়: `terms`-এর শব্দ body-তে দাগানো ও tooltip, `points`-এর “Label: ব্যাখ্যা” থেকে tile, `chain` থেকে চলমান journey, code-এ syntax রং, আর শেষে mind map + flashcard সহ “ঝালাই” পর্দা।
 
-ধাপের সরাসরি link: `#/lesson/<id>/<ধাপ নম্বর | recap | lab | quiz | cheat>`।
-
-অগ্রগতি browser-এর localStorage-এ থাকে। সব simulation browser-এর ভেতরে — কোনো আসল network request যায় না।
+ধাপের সরাসরি link: `/learn/<id>/#<ধাপ নম্বর | recap | lab | quiz | cheat>`।

@@ -102,7 +102,7 @@ export default function SQLiLab({ onComplete }) {
         </div>
         <div className="stack">
           <div className="card">
-            <div className="section-h">⚙️ Go backend যে query বানাল (লাইভ)</div>
+            <div className="section-h">⚙️ Backend যে query বানাল (লাইভ)</div>
             <pre className="code sql-live">
               {pieces.map(([t, k], i) => <span key={i} className={'q-' + k}>{t}</span>)}
             </pre>

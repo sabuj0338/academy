@@ -93,7 +93,7 @@ export default {
       ['\' AND password = \'…\'', 'বাতিল হয়ে গেল', 'Password যাচাইয়ের অংশটা এখন comment — database আর এটা পড়েই না। ফল: প্রথম user (সাধারণত admin) হিসেবে login।'],
     ] } },
     2: { ask: ask('Login form-এ input-এর quote চিহ্ন মুছে দিলেই কি SQL injection বন্ধ?', ['না — সংখ্যার field, encoding ইত্যাদি দিয়ে পাশ কাটানো যায়', 'হ্যাঁ, পুরোপুরি বন্ধ', 'হ্যাঁ, যদি সাথে password লম্বা হয়'], 0, 'Blocklist সবসময় কিছু না কিছু বাদ দেয় (`WHERE id = 5 OR 1=1`-এ quote-ই লাগে না)। একমাত্র নির্ভরযোগ্য সমাধান parameterized query।') },
-    3: { seq: { title: 'Parameterized query — code আর data আলাদা পথে', actors: [['⚙️', 'Go app'], ['🗄️', 'PostgreSQL']], msgs: [
+    3: { seq: { title: 'Parameterized query — code আর data আলাদা পথে', actors: [['⚙️', 'Node.js app'], ['🗄️', 'PostgreSQL']], msgs: [
       [0, 1, 'PREPARE: … WHERE email = $1', 'আগে শুধু query-র কাঠামো যায়। Database এটা parse করে পরিকল্পনা বানিয়ে ফেলে।'],
       [0, 1, 'value $1 = "\' OR \'1\'=\'1\' --"', 'তারপর মান আলাদাভাবে যায় — নিছক data হিসেবে।'],
       [1, 1, 'ওই অদ্ভুত নামের email খুঁজছে', 'কাঠামো আগেই পাকা — তাই মানের ভেতরের quote বা OR কখনো SQL হিসেবে চলে না।', 'good'],
@@ -224,7 +224,7 @@ export default {
       ['://', ''],
       ['app.shop.example', 'Host', 'shop.example আর app.shop.example-ও আলাদা origin — subdomain মানেই ভিন্ন।'],
       [':', ''],
-      ['443', 'Port', ':3000 আর :8080 আলাদা origin। তাই localhost:3000-এর React থেকে localhost:8080-এর Go API-তে call করতে CORS লাগে।'],
+      ['443', 'Port', ':3000 আর :8080 আলাদা origin। তাই localhost:3000-এর React থেকে localhost:8080-এর Node.js API-তে call করতে CORS লাগে।'],
     ] } },
     1: { ask: ask('Server যে Origin আসে সেটাই Access-Control-Allow-Origin-এ ফেরত দেয়, সাথে Allow-Credentials: true। ফলাফল?', ['যেকোনো site logged-in user-এর data পড়তে পারে', 'কোনো সমস্যা নেই', 'শুধু নিজের domain পারে'], 0, 'এটা “*”-এর চেয়েও খারাপ — কারণ cookie সহ কাজ করে। evil.example-এর JavaScript victim-এর পরিচয়ে তোমার API পড়ে নেবে। নির্দিষ্ট allowlist ব্যবহার করো।') },
     2: { seq: { title: 'Preflight — আসল request-এর আগে অনুমতি চাওয়া', actors: [['🌐', 'Browser (app.example)'], ['⚙️', 'api.example']], msgs: [
@@ -265,7 +265,7 @@ export default {
       ['www-data', 'Group', 'কোন group।'],
       ['  app.sh', ''],
     ], note: 'সংখ্যায়: rwx=7, r-x=5, ---=0 → chmod 750' } },
-    2: { ask: ask('তোমার Go app root হিসেবে চলছে, আর তাতে একটা RCE bug আছে। Attacker কী পাবে?', ['পুরো server-এর root নিয়ন্ত্রণ', 'শুধু app-এর folder', 'কিছুই না'], 0, 'App যে user হিসেবে চলে, attacker-ও ঠিক সেই ক্ষমতা পায়। তাই আলাদা, ক্ষমতাহীন user (Least Privilege) — bug থাকলেও ক্ষতি সীমিত।') },
+    2: { ask: ask('তোমার Node.js app root হিসেবে চলছে, আর তাতে একটা RCE bug আছে। Attacker কী পাবে?', ['পুরো server-এর root নিয়ন্ত্রণ', 'শুধু app-এর folder', 'কিছুই না'], 0, 'App যে user হিসেবে চলে, attacker-ও ঠিক সেই ক্ষমতা পায়। তাই আলাদা, ক্ষমতাহীন user (Least Privilege) — bug থাকলেও ক্ষতি সীমিত।') },
   },
   ssh: {
     1: { seq: { title: 'SSH key authentication — private key কখনো তারে যায় না', actors: [['💻', 'তোমার laptop'], ['🖥️', 'Server']], msgs: [
@@ -309,7 +309,7 @@ export default {
     ] } },
   },
   docker: {
-    1: { bars: { title: 'একই Go app, ভিন্ন base image — আকার (আনুমানিক)', scale: 'sqrt', items: [['golang (পুরো toolchain সহ)', 800, '~৮০০ MB', 'bad'], ['alpine + binary', 20, '~২০ MB'], ['distroless / scratch + binary', 10, '~১০ MB', 'good']], note: 'ছোট image মানে শুধু দ্রুত deploy নয় — ভেতরে shell, curl, package manager না থাকলে ঢুকে পড়া attacker-এর হাতে কোনো হাতিয়ারও থাকে না।' } },
+    1: { bars: { title: 'একই Node.js app, ভিন্ন base image — আকার (আনুমানিক)', scale: 'sqrt', items: [['node:22 (পুরো OS + tools)', 1100, '~১.১ GB', 'bad'], ['node:22-slim', 230, '~২৩০ MB'], ['node:22-alpine', 160, '~১৬০ MB'], ['distroless/nodejs22', 130, '~১৩০ MB', 'good']], note: 'ছোট image মানে শুধু দ্রুত deploy নয় — ভেতরে shell, curl, package manager না থাকলে ঢুকে পড়া attacker-এর হাতে কোনো হাতিয়ারও থাকে না।' } },
     2: { ask: ask('`docker run --privileged` দিয়ে চালানো container-এ attacker ঢুকলে কী হয়?', ['সে সহজেই host machine-এর root হতে পারে', 'Container-এর ভেতরেই আটকে থাকে', 'Docker নিজে থেকে container বন্ধ করে দেয়'], 0, '--privileged প্রায় সব isolation খুলে দেয় — host-এর device ও kernel হাতের মুঠোয়। একইভাবে /var/run/docker.sock mount করাও host-এর root দিয়ে দেওয়ার সমান।') },
   },
   ddos: {
@@ -354,11 +354,11 @@ export default {
   },
   secrets: {
     0: { ask: ask('ভুল করে .env commit করে ফেলেছ; পরের commit-এ file-টা মুছে দিলে। Secret কি এখন নিরাপদ?', ['না — git history-তে চিরকাল থেকে যায়', 'হ্যাঁ, মুছে তো দিয়েছি', 'হ্যাঁ, repo private হলে'], 0, 'Git কিছুই ভোলে না, আর bot কয়েক সেকেন্ডে public repo ঘেঁটে key খুঁজে নেয়। একমাত্র সমাধান: key-টা সাথে সাথে rotate (বাতিল করে নতুন) করা।') },
-    1: { anatomy: { title: 'Next.js-এ একটা prefix-ই সব বদলে দেয়', parts: [
+    1: { anatomy: { title: 'Frontend-এ একটা prefix-ই সব বদলে দেয় (Next.js-এর উদাহরণ; Vite-এ VITE_)', parts: [
       ['NEXT_PUBLIC_', 'বিপজ্জনক prefix', 'এই prefix মানে: “build-এর সময় এই মান JavaScript bundle-এ বসিয়ে browser-এ পাঠাও।” পৃথিবীর সবাই DevTools-এ দেখতে পাবে।', 'bad'],
       ['STRIPE_KEY', 'নাম', 'নামে কিছু যায় আসে না — prefix-ই ঠিক করে কে দেখবে।'],
       ['=', ''],
-      ['sk_live_51Hx…', 'Secret key', 'এটা server-এর secret। prefix-টা বাদ দাও, আর শুধু server component, route handler বা Go backend থেকে ব্যবহার করো।', 'bad'],
+      ['sk_live_51Hx…', 'Secret key', 'এটা server-এর secret। prefix-টা বাদ দাও, আর শুধু server component, route handler বা backend থেকে ব্যবহার করো।', 'bad'],
     ] } },
   },
   encryption: {
@@ -438,7 +438,7 @@ export default {
       ['☁️', 'Edge — Cloudflare', 'DDoS শোষণ, WAF, bot ছাঁকা, origin IP লুকানো।'],
       ['🧱', 'Network — Firewall', 'Default deny; শুধু 443 (Cloudflare থেকে) আর SSH (key দিয়ে)।'],
       ['🔀', 'Proxy — Nginx', 'TLS, security header, rate limit, request-এর আকার সীমা।'],
-      ['⚙️', 'App — Go Fiber / Next.js', 'Input validation, authentication, প্রতিটি request-এ authorization, parameterized query, output escaping।'],
+      ['⚙️', 'App — Node.js / React', 'Input validation, authentication, প্রতিটি request-এ authorization, parameterized query, output escaping।'],
       ['🗄️', 'Data — PostgreSQL / Redis', 'Least privilege role, শুধু private network, password hashing, secret আলাদা জায়গায়।'],
       ['🛟', 'Recovery — Backup, Log, Monitoring', 'সব স্তর ভাঙলেও: টের পাও (alert), বোঝো (log), আর ফিরে আসো (পরীক্ষিত backup)।'],
     ] } },

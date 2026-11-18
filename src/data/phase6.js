@@ -8,7 +8,7 @@ export default [
     title: 'Security Headers',
     subtitle: 'Browser-কে নিরাপত্তার নির্দেশ দাও',
     duration: '২৫ মিনিট',
-    goals: ['প্রধান security header ও তাদের কাজ', 'CSP লেখা', 'Next.js ও Nginx-এ header যোগ', 'Grade A পাওয়া'],
+    goals: ['প্রধান security header ও তাদের কাজ', 'CSP লেখা', 'App ও Nginx-এ header যোগ', 'Grade A পাওয়া'],
     steps: [
       {
         title: 'Header = browser-এর জন্য নিয়মপত্র',
@@ -45,31 +45,31 @@ export default [
     title: 'Dependency Vulnerabilities',
     subtitle: 'তোমার code-এর ৯০% অন্যের লেখা',
     duration: '২৫ মিনিট',
-    goals: ['Supply chain ঝুঁকি', 'npm audit, govulncheck, trivy', 'Lockfile ও typosquatting', 'Dependabot/Renovate'],
+    goals: ['Supply chain ঝুঁকি', 'npm audit, Dependabot, Trivy', 'Lockfile ও typosquatting', 'Dependabot/Renovate'],
     steps: [
       {
         title: 'Supply chain attack',
-        body: 'একটি সাধারণ Next.js project-এ ১০০০+ npm package থাকে। এর যেকোনোটির vulnerability বা compromise তোমার app-এর vulnerability।',
+        body: 'একটি সাধারণ React বা Node.js project-এ ১০০০+ npm package থাকে। এর যেকোনোটির vulnerability বা compromise তোমার app-এর vulnerability।',
         points: ['Known CVE — পুরনো version (Log4Shell)', 'Malicious package — typosquatting (reqeusts, expresss)', 'Account takeover — maintainer-এর account hack করে malicious version publish (event-stream, ua-parser-js)', 'postinstall script — install-এর সময়ই code চলে'],
       },
       {
         title: 'Scan tools',
         body: '',
-        code: [{ label: 'Commands', lang: 'bash', kind: 'good', text: 'npm audit --omit=dev\nnpm audit fix\n\ngo install golang.org/x/vuln/cmd/govulncheck@latest\ngovulncheck ./...          # শুধু তোমার code যে function call করে সেটা দেখায়\n\ntrivy fs .                 # সব lockfile + Dockerfile' }],
-        points: ['Lockfile commit করো (package-lock.json, go.sum)', 'CI-তে npm ci (lockfile মেনে)', 'Dependabot / Renovate — স্বয়ংক্রিয় PR', 'নতুন package যোগের আগে: download সংখ্যা, maintainer, শেষ update দেখো'],
+        code: [{ label: 'Commands', lang: 'bash', kind: 'good', text: 'npm audit --omit=dev       # শুধু production dependency\nnpm audit fix              # নিরাপদ upgrade নিজে থেকে\nnpm outdated               # কোনগুলো পুরনো হয়ে গেছে\n\ntrivy fs .                 # সব lockfile + Dockerfile' }],
+        points: ['Lockfile commit করো (package-lock.json)', 'CI-তে npm ci (lockfile মেনে)', 'Dependabot / Renovate — স্বয়ংক্রিয় PR', 'নতুন package যোগের আগে: download সংখ্যা, maintainer, শেষ update দেখো'],
       },
     ],
     labs: [{ type: 'deps', title: 'Dependency Triage', intro: 'Scanner তোমার project-এ বেশ কিছু vulnerability পেয়েছে। প্রতিটির severity, reachability ও fix দেখে সিদ্ধান্ত নাও — কোনটা এখনই upgrade, কোনটা পরে, কোনটা সরাতে হবে।' }],
     quiz: [
-      { q: 'govulncheck-এর বিশেষত্ব কী?', options: ['শুধু npm', 'তোমার code আসলে vulnerable function call করে কিনা দেখে', 'Docker scan', 'Password crack'], answer: 1, explain: 'Reachability analysis — noise কম।' },
+      { q: 'Reachability analysis (যেমন Snyk বা Go-র govulncheck)-এর বিশেষত্ব কী?', options: ['শুধু npm', 'তোমার code আসলে vulnerable function call করে কিনা দেখে', 'Docker scan', 'Password crack'], answer: 1, explain: 'Reachability analysis — noise কম।' },
       { q: '"expresss" নামের package কী হতে পারে?', options: ['নতুন version', 'Typosquatting malicious package', 'Official fork', 'TypeScript types'], answer: 1, explain: 'বানান খেয়াল করো।' },
     ],
     cheat: {
       category: 'Testing & Monitoring', severity: 'high',
       summary: 'Dependency-র vulnerability = তোমার vulnerability।',
-      rules: ['Lockfile commit + npm ci', 'npm audit / govulncheck / trivy CI-তে', 'Dependabot/Renovate', 'নতুন package যাচাই', 'অব্যবহৃত package সরাও'],
-      checklist: ['npm audit --omit=dev', 'govulncheck ./...', 'trivy fs .'],
-      commands: ['npm audit --omit=dev', 'govulncheck ./...', 'trivy fs --severity HIGH,CRITICAL .'],
+      rules: ['Lockfile commit + npm ci', 'npm audit / Trivy CI-তে', 'Dependabot/Renovate', 'নতুন package যাচাই', 'অব্যবহৃত package সরাও'],
+      checklist: ['npm audit --omit=dev', 'npm outdated', 'trivy fs .'],
+      commands: ['npm audit --omit=dev', 'npm audit fix', 'trivy fs --severity HIGH,CRITICAL .'],
       remember: 'npm install = অন্যের code নিজের server-এ চালানো।',
     },
   },
@@ -229,10 +229,10 @@ export default [
       {
         title: 'Audit report-এর গঠন',
         body: 'প্রতিটি finding-এ: শিরোনাম, severity (Critical/High/Medium/Low), প্রভাবিত component, বিবরণ, reproduce করার ধাপ, প্রভাব, সমাধান, reference। শুরুতে executive summary — non-technical পাঠকের জন্য।',
-        code: [{ label: 'Finding template', lang: 'md', text: '## [HIGH] IDOR in GET /api/invoices/:id\n**Component:** Go Fiber API\n**Steps:** User A token দিয়ে /api/invoices/<B-এর id>\n**Impact:** যেকোনো user-এর invoice (নাম, ঠিকানা, phone) পড়া যায়\n**Fix:** WHERE id=$1 AND user_id=$2; 404 ফেরত\n**Ref:** OWASP API1:2023' }],
+        code: [{ label: 'Finding template', lang: 'md', text: '## [HIGH] IDOR in GET /api/invoices/:id\n**Component:** Node.js API\n**Steps:** User A token দিয়ে /api/invoices/<B-এর id>\n**Impact:** যেকোনো user-এর invoice (নাম, ঠিকানা, phone) পড়া যায়\n**Fix:** WHERE id=$1 AND user_id=$2; 404 ফেরত\n**Ref:** OWASP API1:2023' }],
       },
     ],
-    labs: [{ type: 'capstone', title: 'Full-Stack Audit — ShopBD', intro: 'ShopBD-এর পুরো stack (Next.js → Cloudflare → Nginx → Go Fiber → PostgreSQL/Redis → Docker/Linux) তোমার সামনে। প্রতিটি layer-এ ক্লিক করে evidence দেখো, finding চিহ্নিত করো ও severity দাও। শেষে তোমার audit report তৈরি হবে।' }],
+    labs: [{ type: 'capstone', title: 'Full-Stack Audit — ShopBD', intro: 'ShopBD-এর পুরো stack (React → Cloudflare → Nginx → Node.js → PostgreSQL/Redis → Docker/Linux) তোমার সামনে। প্রতিটি layer-এ ক্লিক করে evidence দেখো, finding চিহ্নিত করো ও severity দাও। শেষে তোমার audit report তৈরি হবে।' }],
     quiz: [
       { q: 'OWASP Top 10 2021-এ #1 কোনটি?', options: ['Injection', 'Broken Access Control', 'XSS', 'SSRF'], answer: 1, explain: 'A01।' },
       { q: 'Public Redis without password — severity?', options: ['Low', 'Medium', 'Critical', 'Info'], answer: 2, explain: 'Data + RCE সম্ভাবনা।' },

@@ -102,7 +102,7 @@ export default [
         points: ['.env commit (এবং পরে মুছলেও history-তে থেকে যায়!)', 'Frontend bundle-এ NEXT_PUBLIC_ দিয়ে secret', 'Docker image layer', 'Log ও error message', 'CI/CD log-এ echo $SECRET', 'Slack/ChatGPT-এ paste'],
       },
       {
-        title: 'Next.js-এর বিশেষ সতর্কতা',
+        title: 'Frontend-এর বিশেষ সতর্কতা',
         body: 'NEXT_PUBLIC_ prefix দেওয়া env variable build-এর সময় browser bundle-এ ঢুকে যায় — সবাই দেখতে পারে। Secret কখনো NEXT_PUBLIC_ নয়; শুধু server component / API route-এ ব্যবহার করো।',
         code: [
           { label: 'দুর্বল', lang: 'bash', kind: 'bad', text: 'NEXT_PUBLIC_STRIPE_SECRET=sk_live_…' },

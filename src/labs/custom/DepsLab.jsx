@@ -4,7 +4,7 @@ import { useCompletion, Code } from '../../components/ui.jsx';
 
 const VULNS = [
   { pkg: 'next', ver: '14.1.0', sev: 'critical', id: 'GHSA (middleware auth bypass)', info: 'Production dependency · তোমার middleware.ts auth-এর জন্য ব্যবহার হয় · fix: 14.2.25', answer: 'now', why: 'Critical + reachable + production → এখনই upgrade।' },
-  { pkg: 'golang.org/x/crypto', ver: 'v0.17.0', sev: 'high', id: 'GO-2024 (ssh)', info: 'govulncheck: "Your code does not call vulnerable functions" · fix: v0.31.0', answer: 'later', why: 'Reachable নয় → জরুরি নয়, পরের sprint-এ upgrade।' },
+  { pkg: 'semver', ver: '5.7.1', sev: 'high', id: 'CVE-2022-25883 (ReDoS)', info: 'npm ls semver: শুধু একটি build tool-এর ভেতরে (devDependency) — production code এটা কখনো ডাকে না · fix: 5.7.2', answer: 'later', why: 'Production-এ পৌঁছায় না → জরুরি নয়, পরের sprint-এ upgrade।' },
   { pkg: 'expresss', ver: '1.0.2', sev: 'critical', id: 'MAL-2026 (malicious)', info: 'Weekly downloads: 41 · ১ সপ্তাহ আগে publish · postinstall script আছে · "express"-এর ভুল বানান', answer: 'remove', why: 'Typosquatting malicious package — সরাও, secret rotate করো (postinstall চলেছে!)।' },
   { pkg: 'semver', ver: '5.7.1', sev: 'medium', id: 'ReDoS', info: 'devDependency · শুধু build tool-এর ভেতরে · user input পায় না', answer: 'later', why: 'Dev-only, user input নেই → কম ঝুঁকি, স্বাভাবিক update-এ।' },
   { pkg: 'github.com/gofiber/fiber/v2', ver: 'v2.49.0', sev: 'high', id: 'CVE (CSRF token)', info: 'Production · তুমি csrf middleware ব্যবহার করো · fix: v2.52.5', answer: 'now', why: 'তুমি ঠিক ওই middleware ব্যবহার করো → এখনই।' },
@@ -19,7 +19,7 @@ export default function DepsLab({ onComplete }) {
   useCompletion(VULNS.length, correct, onComplete);
   return (
     <div className="stack">
-      <Code label="$ npm audit --omit=dev && govulncheck ./... && trivy fs ." lang="bash" text={`found ${VULNS.length} issues (2 critical, 2 high, 1 medium, 1 low)`} />
+      <Code label="$ npm audit --omit=dev && trivy fs ." lang="bash" text={`found ${VULNS.length} issues (2 critical, 2 high, 1 medium, 1 low)`} />
       {VULNS.map((v, i) => {
         const a = ans[i];
         const ok = a === v.answer;

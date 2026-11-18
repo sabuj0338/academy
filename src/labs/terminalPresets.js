@@ -111,7 +111,7 @@ export const terminalPresets = {
 
   secrets: {
     prompt: 'you@laptop:~/shopbd$',
-    banner: 'Repository: shopbd (Next.js + Go Fiber)। কেউ একটি secret push করেছিল।\n"help" দেখো।',
+    banner: 'Repository: shopbd (React + Node.js)। কেউ একটি secret push করেছিল।\n"help" দেখো।',
     help: 'ls -la\ncat .gitignore\ngit log --oneline\ngit show <commit>\ngitleaks detect --source .\ngrep -r "NEXT_PUBLIC_" .env*\nrotate stripe\nrotate aws\necho ".env" >> .gitignore',
     init: (s) => { s.gi = false; s.r = {}; s.t = {}; },
     commands: [
@@ -182,13 +182,13 @@ export const terminalPresets = {
   },
   ports: {
     prompt: 'you@server:~$',
-    banner: 'তোমার VPS-এ কোন port-এ কে শুনছে (listening)? আর কোন connection চলছে?',
+    banner: 'এই server-এ কোন port-এ কে শুনছে (listening)? আর কোন connection চলছে?',
     help: 'ss -tlnp\nss -tn state established\nss -ulnp\ncurl -I http://localhost:3000\nnc -zv localhost 5432\nsudo lsof -i :443',
     commands: [
       { match: /^(sudo )?(ss|netstat) -(tlnp|tulpn|tlpn|ltnp)$/, out: 'State   Local Address:Port   Process\nLISTEN  0.0.0.0:22           sshd        ← SSH (সবার জন্য খোলা)\nLISTEN  0.0.0.0:80           nginx\nLISTEN  0.0.0.0:443          nginx       ← HTTPS\nLISTEN  127.0.0.1:3000       go-fiber    ← শুধু localhost (ভালো! nginx এর মাধ্যমে আসে)\nLISTEN  127.0.0.1:6379       redis\nLISTEN  0.0.0.0:5432         postgres    ⚠ সবার জন্য খোলা! 127.0.0.1 হওয়া উচিত', flag: 'listen' },
-      { match: /^(sudo )?ss -tn( state established)?$/, out: 'State  Local:Port          Peer:Port\nESTAB  10.0.0.4:443         103.110.5.9:51544    ← একজন visitor\nESTAB  10.0.0.4:443         37.111.2.80:60211    ← আরেকজন, একই 443 port!\nESTAB  127.0.0.1:41822      127.0.0.1:3000       ← nginx → Fiber\nESTAB  10.0.0.4:22          103.110.5.9:50022    ← তোমার SSH\n\n💡 একই server port-এ হাজার connection — কারণ socket = (src IP, src port, dst IP, dst port, protocol) — ৫টি মিলেই আলাদা।', flag: 'estab' },
+      { match: /^(sudo )?ss -tn( state established)?$/, out: 'State  Local:Port          Peer:Port\nESTAB  10.0.0.4:443         103.110.5.9:51544    ← একজন visitor\nESTAB  10.0.0.4:443         37.111.2.80:60211    ← আরেকজন, একই 443 port!\nESTAB  127.0.0.1:41822      127.0.0.1:3000       ← nginx → Node app\nESTAB  10.0.0.4:22          103.110.5.9:50022    ← তোমার SSH\n\n💡 একই server port-এ হাজার connection — কারণ socket = (src IP, src port, dst IP, dst port, protocol) — ৫টি মিলেই আলাদা।', flag: 'estab' },
       { match: /^(sudo )?ss -ulnp$/, out: 'State   Local Address:Port   Process\nUNCONN  127.0.0.53:53        systemd-resolved   ← DNS (UDP)\nUNCONN  0.0.0.0:51820        wireguard          ← VPN (UDP)', flag: 'udp' },
-      { match: /^curl -I http:\/\/localhost:3000\/?$/, out: 'HTTP/1.1 200 OK\nContent-Type: application/json\nX-Powered-By: Fiber', flag: 'curl' },
+      { match: /^curl -I http:\/\/localhost:3000\/?$/, out: 'HTTP/1.1 200 OK\nContent-Type: application/json\nX-Powered-By: Express', flag: 'curl' },
       { match: /^nc -zv localhost 5432$/, out: 'Connection to localhost 5432 port [tcp/postgresql] succeeded!', flag: 'nc' },
       { match: /^nc -zv localhost (\d+)$/, out: (m) => `nc: connect to localhost port ${m[1]} (tcp) failed: Connection refused  ← কেউ শুনছে না` },
       { match: /^sudo lsof -i :443$/, out: 'COMMAND  PID  USER  FD  TYPE  NODE NAME\nnginx    812  root  6u  IPv4  TCP *:https (LISTEN)\nnginx    813  www   6u  IPv4  TCP 10.0.0.4:https->103.110.5.9:51544 (ESTABLISHED)', flag: 'lsof' },
@@ -226,10 +226,10 @@ export const terminalPresets = {
   },
   devops: {
     prompt: 'you@ci:~/shop$',
-    banner: 'Docker → registry → Kubernetes। একটি Go API ship করো।',
+    banner: 'Docker → registry → Kubernetes। একটি Node.js API ship করো।',
     help: 'docker build -t shop-api:v2 .\ndocker run -d -p 3000:3000 shop-api:v2\ndocker ps\ndocker push registry.example.com/shop-api:v2\nkubectl apply -f deploy.yaml\nkubectl get pods\nkubectl rollout status deploy/shop-api\nkubectl rollout undo deploy/shop-api\nterraform plan',
     commands: [
-      { match: /^docker build -t shop-api:v2 \.$/, out: '[+] Building 21.4s\n => [build 1/4] FROM golang:1.22-alpine\n => [build 4/4] RUN go build -o /app ./cmd/api\n => [stage-2 1/2] FROM gcr.io/distroless/static   ← ছোট, নিরাপদ runtime image\n => exporting to image shop-api:v2 (14.2MB)', flag: 'build' },
+      { match: /^docker build -t shop-api:v2 \.$/, out: '[+] Building 21.4s\n => [build 1/4] FROM node:22-alpine\n => [build 4/4] RUN npm ci --omit=dev\n => [stage-2 1/2] FROM gcr.io/distroless/nodejs22-debian12   ← ছোট, নিরাপদ runtime image\n => exporting to image shop-api:v2 (132MB)', flag: 'build' },
       { match: /^docker run -d -p 3000:3000 shop-api:v2$/, out: 'a3f9c2e1b7d4  ← container চালু (host-এর 3000 → container-এর 3000)', flag: 'run' },
       { match: /^docker ps$/, out: 'CONTAINER ID  IMAGE         STATUS         PORTS\na3f9c2e1b7d4  shop-api:v2   Up 8 seconds   0.0.0.0:3000->3000/tcp', flag: 'ps' },
       { match: /^docker push registry\.example\.com\/shop-api:v2$/, out: 'v2: digest: sha256:9b1e…f04 size: 1162  ← এখন যেকোনো server এই image টেনে নিতে পারবে', flag: 'push' },

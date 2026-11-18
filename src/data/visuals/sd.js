@@ -180,8 +180,8 @@ export default {
   'sd-deploy': {
     0: { layers: { title: 'একটি Docker image — স্তরের উপর স্তর', items: [
       ['📦', 'তোমার app code', 'সবচেয়ে উপরের ও সবচেয়ে ঘনঘন বদলানো স্তর — তাই Dockerfile-এ এটা সবার শেষে COPY করো।'],
-      ['📚', 'Dependency (go mod download / npm ci)', 'go.mod বা package.json না বদলালে এই স্তর cache থেকে আসে — build কয়েক সেকেন্ডে শেষ।'],
-      ['⚙️', 'Runtime (Go / Node)', 'ভাষার compiler বা runtime।'],
+      ['📚', 'Dependency (npm ci)', 'package.json না বদলালে এই স্তর cache থেকে আসে — build কয়েক সেকেন্ডে শেষ।'],
+      ['⚙️', 'Runtime (Node.js)', 'ভাষার compiler বা runtime।'],
       ['🐧', 'Base OS (alpine / distroless)', 'ছোট base = ছোট image + কম vulnerability।'],
     ] } },
     1: { ask: ask('CI pipeline-এ test fail করেছে। সঠিক আচরণ কোনটা?', ['Pipeline থেমে যাবে — production-এ কিছুই যাবে না', 'Deploy হবে, test পরে ঠিক করা যাবে', 'Test-টা মুছে দিয়ে আবার চালাও'], 0, 'CI-এর পুরো উদ্দেশ্যই এই দরজা: ভাঙা code যেন main বা production-এ না পৌঁছায়।') },

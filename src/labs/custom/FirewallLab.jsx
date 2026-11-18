@@ -4,7 +4,7 @@ import { useCompletion } from '../../components/ui.jsx';
 
 const PORTS = [
   { p: 22, s: 'ssh', v: 'OpenSSH 9.6' }, { p: 80, s: 'http', v: 'nginx 1.24' }, { p: 443, s: 'https', v: 'nginx 1.24' },
-  { p: 3000, s: 'http', v: 'Go Fiber (direct!)' }, { p: 5432, s: 'postgresql', v: 'PostgreSQL 16' }, { p: 6379, s: 'redis', v: 'Redis 7.2 (no auth)' }, { p: 2375, s: 'docker', v: 'Docker API (unauthenticated!)' },
+  { p: 3000, s: 'http', v: 'Node.js app (direct!)' }, { p: 5432, s: 'postgresql', v: 'PostgreSQL 16' }, { p: 6379, s: 'redis', v: 'Redis 7.2 (no auth)' }, { p: 2375, s: 'docker', v: 'Docker API (unauthenticated!)' },
 ];
 const SOURCES = { any: 'any', office: '203.0.113.10 (অফিস)', cf: 'Cloudflare IP range', atk: '45.83.12.9 (attacker)' };
 const TRAFFIC = [
@@ -12,7 +12,7 @@ const TRAFFIC = [
   { from: 'atk', port: 22, label: 'Bot SSH brute-force', want: 'deny' },
   { from: 'cf', port: 443, label: 'Visitor (Cloudflare দিয়ে)', want: 'allow' },
   { from: 'atk', port: 443, label: 'সরাসরি origin IP-তে (CF bypass)', want: 'deny' },
-  { from: 'atk', port: 3000, label: 'Fiber-এ সরাসরি (Nginx bypass)', want: 'deny' },
+  { from: 'atk', port: 3000, label: 'App-এ সরাসরি (Nginx bypass)', want: 'deny' },
   { from: 'atk', port: 5432, label: 'PostgreSQL scan', want: 'deny' },
   { from: 'atk', port: 6379, label: 'Redis exploit', want: 'deny' },
   { from: 'atk', port: 2375, label: 'Docker API takeover', want: 'deny' },
